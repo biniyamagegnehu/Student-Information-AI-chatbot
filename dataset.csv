@@ -1,0 +1,751 @@
+text,intent
+hello,greeting
+hi,greeting
+hey,greeting
+good morning,greeting
+good afternoon,greeting
+good evening,greeting
+greetings,greeting
+howdy,greeting
+hi there,greeting
+hello there,greeting
+what's up,greeting
+yow,greeting
+selasi,greeting
+hi bot,greeting
+hello chatbot,greeting
+good day,greeting
+hiya,greeting
+heyy,greeting
+hullo,greeting
+is anyone there,greeting
+morning,greeting
+evening,greeting
+afternoon,greeting
+helo,greeting
+hihi,greeting
+heya,greeting
+wazup,greeting
+sup,greeting
+yo,greeting
+any one here,greeting
+hye,greeting
+selam,greeting
+selm,greeting
+hi fren,greeting
+dear bot,greeting
+greetings chatbot,greeting
+hiiii,greeting
+hiii,greeting
+hlo,greeting
+heloo,greeting
+hay,greeting
+hie,greeting
+heyyy,greeting
+aloha,greeting
+hola,greeting
+namaste,greeting
+wsg,greeting
+good to see you,greeting
+nice to meet you,greeting
+hi buddy,greeting
+when is registration,registration
+registration dates,registration
+enrollment process,registration
+late registration,registration
+how to register,registration
+where do i register,registration
+regstration date,registration
+registration deadline,registration
+open for registration,registration
+register for classes,registration
+when can i enroll,registration
+add drop period,registration
+late enroll,registration
+deadline for registration,registration
+how do i register,registration
+registraton schedule,registration
+sign up for classes,registration
+am i registered,registration
+registeration time,registration
+online registration,registration
+register portal,registration
+what is the process to register,registration
+when is add and drop,registration
+add/drop dates,registration
+can i register now,registration
+is registration open,registration
+register for next semester,registration
+enrollment deadline,registration
+late add drop,registration
+registration penalty,registration
+how much is late registration,registration
+do i have to register,registration
+self sponsored registration,registration
+regular registration,registration
+extension registration,registration
+evening registration,registration
+registartion,registration
+registation,registration
+how to do enrollment,registration
+enrollment requirements,registration
+register online,registration
+clearance for registration,registration
+what is needed to register,registration
+fresh student registration,registration
+returning student registration,registration
+registration for freshmen,registration
+when is freshman registration,registration
+senior registration,registration
+enroll classes,registration
+pick classes,registration
+what subjects are offered,courses
+available courses,courses
+departments,courses
+list of classes,courses
+what courses do you have,courses
+degree programs,courses
+available subjects,courses
+list of courses,courses
+what is taught here,courses
+computer science courses,courses
+engineering departments,courses
+business courses,courses
+medicine subjects,courses
+can i see the subjects,courses
+which courses are available,courses
+course catalog,courses
+course list,courses
+what classes can i take,courses
+offered courses,courses
+subjects list,courses
+department list,courses
+faculties,courses
+what are the faculties,courses
+colleges in the university,courses
+majors offered,courses
+what can i study,courses
+available majors,courses
+field of study,courses
+programs offered,courses
+ug programs,courses
+pg programs,courses
+undergraduate courses,courses
+postgraduate courses,courses
+masters courses,courses
+phd programs,courses
+short courses,courses
+summer courses,courses
+evening courses,courses
+extension programs,courses
+fresh courses,courses
+common courses,courses
+elective courses,courses
+what are the electives,courses
+core modules,courses
+credit hours,courses
+how many credits per course,courses
+subject syllabus,courses
+course outline,courses
+coursess,courses
+subjets,courses
+class timetable,schedule
+lecture times,schedule
+when is my class,schedule
+class schedule,schedule
+daily schedule,schedule
+time table,schedule
+academic calendar,schedule
+when do classes start,schedule
+schedule for this week,schedule
+today's classes,schedule
+my timetable,schedule
+lecture schedule,schedule
+class timings,schedule
+what time is the lecture,schedule
+when does the class end,schedule
+class shift,schedule
+morning shift,schedule
+afternoon shift,schedule
+evening class time,schedule
+schedule for extension,schedule
+timetable for regular,schedule
+where is the schedule,schedule
+can i see my timetable,schedule
+class hours,schedule
+lab schedule,schedule
+tutorial schedule,schedule
+when is the tutorial,schedule
+make up class schedule,schedule
+schedule,schedule
+timetable,schedule
+time-table,schedule
+schedul,schedule
+schdule,schedule
+when do we start classes,schedule
+semester schedule,schedule
+yearly calendar,schedule
+academic year schedule,schedule
+calendar,schedule
+when does the semester end,schedule
+class times,schedule
+lecture hours,schedule
+contact hours,schedule
+weekly schedule,schedule
+monday classes,schedule
+weekend schedule,schedule
+saturday class,schedule
+sunday class,schedule
+block schedule,schedule
+schedule for cs,schedule
+timetable for fresh,schedule
+exam dates,exam
+test schedule,exam
+mid exam,exam
+final exam,exam
+when is the exam,exam
+exam time table,exam
+test timetable,exam
+midterm date,exam
+final date,exam
+when are we taking exams,exam
+exam schedul,exam
+exam calender,exam
+when is the test,exam
+quiz schedule,exam
+exam center,exam
+what time is the exam,exam
+final exam schedule,exam
+mid exam date,exam
+examination period,exam
+when does the exam start,exam
+exit exam,exam
+national exam date,exam
+coc exam,exam
+comprehensive exam,exam
+make up exam,exam
+re-exam date,exam
+supplementary exam,exam
+exam rules,exam
+passing mark,exam
+what is the passing grade,exam
+is the exam hard,exam
+exam timetable,exam
+exam location,exam
+where is the exam,exam
+online exam,exam
+offline exam,exam
+open book exam,exam
+exam result date,exam
+final test,exam
+mid test,exam
+mid sem exam,exam
+end sem exam,exam
+examinations,exam
+exmas,exam
+test dates,exam
+assessment dates,exam
+continuous assessment,exam
+project deadline,exam
+submission date,exam
+assignment deadline,exam
+where is the library,location
+location of registrar office,location
+labs,location
+buildings,location
+where is the main campus,location
+campus map,location
+how to go to the library,location
+where is the cafeteria,location
+cafe location,location
+where is the clinic,location
+clinic location,location
+hospital inside campus,location
+block number,location
+where is block 5,location
+location of block 10,location
+administration building,location
+where is the admin office,location
+president office,location
+where is the finance office,location
+cashier office,location
+library location,location
+digital library,location
+where is the laboratory,location
+computer lab location,location
+where is the freshers block,location
+freshman building,location
+stadium location,location
+lounge location,location
+where can i print,location
+printing shop,location
+book store,location
+stationary shop,location
+where is the main gate,location
+gate 2,location
+which campus is engineering,location
+medical campus location,location
+campus directions,location
+where am i,location
+map of the university,location
+where is the hostel,location
+dorm location,location
+where is the toilet,location
+restroom location,location
+locaton,location
+ware is the library,location
+librery location,location
+where is registrar,location
+finding the cafe,location
+cafe spot,location
+where is the student union,location
+tuition payment,fees
+deadlines for payment,fees
+how much is the fee,fees
+school fee,fees
+semester fee,fees
+payment deadline,fees
+late payment penalty,fees
+where to pay,fees
+bank account for payment,fees
+fee structure,fees
+cost sharing,fees
+cost sharing payment,fees
+how much is cost sharing,fees
+cafeteria fee,fees
+dorm fee,fees
+hostel payment,fees
+registration fee,fees
+tuition cost,fees
+cost per credit hour,fees
+extension fee,fees
+regular student fee,fees
+self sponsored fee,fees
+master's fee,fees
+is education free,fees
+payment receipt,fees
+clearance,fees
+financial issues,fees
+finance office for payment,fees
+payment method,fees
+can i pay via cbe birr,fees
+telebirr payment,fees
+bank transfer,fees
+tuition,fees
+pay fees,fees
+when is the last day to pay,fees
+overdue payment,fees
+installment payment,fees
+pay in installments,fees
+fee waiver,fees
+refund policy,fees
+how to get a refund,fees
+scholarship payment,fees
+fes,fees
+paymnt,fees
+tuton,fees
+how much to pay,fees
+payment slip,fees
+bank slip,fees
+account number,fees
+commercial bank account,fees
+are there scholarships,scholarship
+scholarship opportunities,scholarship
+how to get a scholarship,scholarship
+financial aid,scholarship
+free education,scholarship
+sponsor,scholarship
+sponsorship,scholarship
+fully funded scholarship,scholarship
+partial scholarship,scholarship
+merit based scholarship,scholarship
+need based scholarship,scholarship
+who gets a scholarship,scholarship
+scholarship application,scholarship
+when to apply for scholarship,scholarship
+female scholarship,scholarship
+disability scholarship,scholarship
+international student scholarship,scholarship
+master's scholarship,scholarship
+phd scholarship,scholarship
+scholarship criteria,scholarship
+requirements for scholarship,scholarship
+do you offer scholarships,scholarship
+is there any financial help,scholarship
+financial support,scholarship
+student loan,scholarship
+how to apply for loan,scholarship
+cost sharing waiver,scholarship
+top student award,scholarship
+dean's list scholarship,scholarship
+academic excellence award,scholarship
+scholarship deadline,scholarship
+sholarship,scholarship
+scholaship,scholarship
+apply for financial aid,scholarship
+available grants,scholarship
+student grants,scholarship
+bursary,scholarship
+stipend,scholarship
+do we get pocket money,scholarship
+monthly stipend,scholarship
+allowance,scholarship
+student allowance,scholarship
+how to get sponsor,scholarship
+available sponsorships,scholarship
+finding a sponsor,scholarship
+apply for fund,scholarship
+university fund,scholarship
+educational fund,scholarship
+tuition waiver,scholarship
+fee exemption,scholarship
+dormitory,hostel
+accommodation,hostel
+hostel room,hostel
+where to sleep,hostel
+is there a dorm,hostel
+dorm application,hostel
+how to get a dorm,hostel
+dorm rules,hostel
+hostel fee,hostel
+do you provide accommodation,hostel
+living in campus,hostel
+campus housing,hostel
+dorm assignment,hostel
+change dorm,hostel
+how to change room,hostel
+my room number,hostel
+dorm placement,hostel
+placement result,hostel
+who gets a dorm,hostel
+non-boarding student,hostel
+boarding student,hostel
+cafe and dorm,hostel
+dorm for fresh students,hostel
+senior dorm,hostel
+male dorm,hostel
+female dorm,hostel
+girls hostel,hostel
+boys hostel,hostel
+couples dorm,hostel
+married student housing,hostel
+off campus housing,hostel
+rent outside,hostel
+dorm cost,hostel
+dorm clearance,hostel
+leaving the dorm,hostel
+hostl,hostel
+drom,hostel
+dromitory,hostel
+where is my bed,hostel
+bed space,hostel
+mattress,hostel
+dorm facilities,hostel
+wifi in dorm,hostel
+water in dorm,hostel
+electricity in dorm,hostel
+dorm guard,hostel
+proctor office,hostel
+where is the proctor,hostel
+student residence,hostel
+housing office,hostel
+how to get admitted,admission
+admission process,admission
+requirements for admission,admission
+entrance exam,admission
+passing point for admission,admission
+cut off mark,admission
+admission criteria,admission
+apply for admission,admission
+admission portal,admission
+is admission open,admission
+when does admission start,admission
+admission deadline,admission
+late admission,admission
+conditional admission,admission
+transfer student,admission
+how to transfer,admission
+grade 12 results for admission,admission
+university entrance exam,admission
+placement point,admission
+ministry of education placement,admission
+moe placement,admission
+check placement,admission
+accept placement,admission
+reject placement,admission
+change department,admission
+change field of study,admission
+fresh admission,admission
+masters admission,admission
+pg admission,admission
+online application,admission
+application fee,admission
+document submission,admission
+what documents do i need,admission
+admission letter,admission
+letter of acceptance,admission
+admit card,admission
+entrance exam result,admission
+admission office,admission
+register for entrance,admission
+admision,admission
+admisson,admission
+applying to the university,admission
+how to join,admission
+joining the university,admission
+enrollment process,admission
+new student admission,admission
+admission status,admission
+check admission status,admission
+am i admitted,admission
+admission list,admission
+phone numbers,contacts
+emails,contacts
+office contacts,contacts
+how to contact the university,contacts
+registrar phone number,contacts
+call the admin,contacts
+email address,contacts
+who to call,contacts
+contact info,contacts
+support email,contacts
+help desk number,contacts
+customer service,contacts
+emergency contact,contacts
+campus police number,contacts
+clinic phone number,contacts
+IT support contact,contacts
+contact department head,contacts
+dean's email,contacts
+president's office contact,contacts
+contact the university,contacts
+website link,contacts
+official website,contacts
+facebook page,contacts
+telegram channel,contacts
+official telegram,contacts
+twitter handle,contacts
+social media links,contacts
+contact us,contacts
+address of the university,contacts
+p.o.box,contacts
+zip code,contacts
+university address,contacts
+how to reach you,contacts
+send an email,contacts
+call center,contacts
+toll free number,contacts
+contact details,contacts
+phone num,contacts
+email adress,contacts
+cntact,contacts
+phne,contacts
+reach out,contacts
+is there a phone number,contacts
+give me your phone number,contacts
+who can i speak to,contacts
+speak to a human,contacts
+talk to an agent,contacts
+live chat,contacts
+contact the developers,contacts
+support team,contacts
+grades,results
+GPA,results
+transcripts,results
+where to see my result,results
+check my grade,results
+result portal,results
+when will results be out,results
+result release date,results
+semester result,results
+cumulative gpa,results
+cgpa,results
+sgpa,results
+how to calculate gpa,results
+academic record,results
+print transcript,results
+official transcript,results
+student copy,results
+how to get student copy,results
+grade report,results
+final result,results
+mid result,results
+assessment marks,results
+missing grade,results
+complain about grade,results
+grade appeal,results
+change of grade,results
+F grade,results
+academic dismissal,results
+academic warning,results
+passing gpa,results
+graduation requirement,results
+honor roll,results
+distinction,results
+graduation result,results
+check exam results,results
+online result,results
+sis portal,results
+student information system,results
+resut,results
+grad,results
+marks,results
+my score,results
+exam score,results
+what did i get,results
+grade scale,results
+a+ grade,results
+grading system,results
+clearance for transcript,results
+order transcript,results
+result slip,results
+semester break,holidays
+public holidays,holidays
+when is the break,holidays
+holiday schedule,holidays
+christmas break,holidays
+easter break,holidays
+eid holiday,holidays
+summer vacation,holidays
+end of semester,holidays
+when do we close,holidays
+university closure,holidays
+national holidays,holidays
+is there class tomorrow,holidays
+holiday calendar,holidays
+winter break,holidays
+long break,holidays
+short break,holidays
+mid semester break,holidays
+is it a holiday,holidays
+graduation day,holidays
+special events,holidays
+campus events,holidays
+freshers welcome,holidays
+welcome party,holidays
+cultural day,holidays
+university day,holidays
+sports week,holidays
+weekend break,holidays
+no class day,holidays
+holiday,holidays
+holidy,holidays
+vacaton,holidays
+off days,holidays
+rest days,holidays
+holidays this month,holidays
+next holiday,holidays
+upcoming holidays,holidays
+break time,holidays
+time off,holidays
+study break,holidays
+reading week,holidays
+exam break,holidays
+post exam break,holidays
+graduation ceremony date,holidays
+alumni day,holidays
+parents day,holidays
+visitors day,holidays
+open house,holidays
+campus tour,holidays
+public rest,holidays
+thank you,thanks
+thanks,thanks
+thanks a lot,thanks
+thank you very much,thanks
+much appreciated,thanks
+thanks bot,thanks
+you are helpful,thanks
+great help,thanks
+awesome,thanks
+thanks for the info,thanks
+good job,thanks
+perfect,thanks
+excellent,thanks
+thanks buddy,thanks
+appreciate it,thanks
+thank you chatbot,thanks
+many thanks,thanks
+cool thanks,thanks
+ok thanks,thanks
+alright thank you,thanks
+got it thanks,thanks
+thanks so much,thanks
+thx,thanks
+tnx,thanks
+ty,thanks
+thanx,thanks
+thnk u,thanks
+thnks,thanks
+thank u,thanks
+thanks a bunch,thanks
+super helpful,thanks
+very helpful,thanks
+brilliant,thanks
+wonderful,thanks
+helpful bot,thanks
+you are the best,thanks
+thanks mate,thanks
+thanks friend,thanks
+thank you dear,thanks
+cheers,thanks
+good bot,thanks
+amazing,thanks
+wow thanks,thanks
+thanks for helping,thanks
+i appreciate your help,thanks
+thanks for your time,thanks
+nice one,thanks
+nice,thanks
+thank you for the information,thanks
+exactly what i needed,thanks
+bye,bye
+goodbye,bye
+see you,bye
+later,bye
+catch you later,bye
+bye bot,bye
+exit,bye
+quit,bye
+close,bye
+stop,bye
+end chat,bye
+talk to you later,bye
+bye bye,bye
+see ya,bye
+have a good day,bye
+good night,bye
+have a nice day,bye
+see you soon,bye
+farewell,bye
+going now,bye
+im done,bye
+that's all,bye
+nothing else,bye
+log out,bye
+sign out,bye
+leave,bye
+terminate,bye
+abort,bye
+bye for now,bye
+tata,bye
+ciao,bye
+adios,bye
+bbye,bye
+byee,bye
+byeee,bye
+seeya,bye
+talk later,bye
+until next time,bye
+peace,bye
+peace out,bye
+im leaving,bye
+going offline,bye
+good bye,bye
+bye chatbot,bye
+done,bye
+finished,bye
+no more questions,bye
+thats it,bye
+end session,bye
+terminate chat,bye
