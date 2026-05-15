@@ -16,7 +16,7 @@ import seaborn as sns
 
 # scikit-learn imports
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.pipeline import make_pipeline
@@ -25,37 +25,96 @@ from sklearn.pipeline import make_pipeline
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import word_tokenize
 
 # --- 0. SETUP & INITIALIZATION ---
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 
 # --- 1. TEXT PREPROCESSING SECTION ---
 lemmatizer = WordNetLemmatizer()
+
+# Load default English stopwords
 stop_words = set(stopwords.words('english'))
+# PROFESSIONAL NLP TIP: Do not remove question words or vital auxiliary words!
+# Words like "where" and "when" strongly correlate with "location" and "schedule" intents.
+important_words_to_keep = {'where', 'when', 'how', 'what', 'who', 'which', 'why', 'can', 'do', 'is', 'are', 'i', 'my'}
+stop_words = stop_words - important_words_to_keep
+
+# Dictionary for common typo corrections and abbreviations
+TYPO_CORRECTIONS = {
+    "regstration": "registration",
+    "registeration": "registration",
+    "scheduel": "schedule",
+    "scedule": "schedule",
+    "librery": "library",
+    "wher": "where",
+    "pls": "please",
+    "plz": "please",
+    "info": "information",
+    "admin": "administration",
+    "dept": "department",
+    "cs": "computer science",
+    "it": "information technology",
+    "lab": "laboratory",
+    "dorm": "dormitory",
+    "registar": "registrar"
+}
 
 def preprocess_text(text):
     """
-    Cleans and normalizes the input text.
+    Professionally cleans and normalizes the input text for NLP intent classification.
     """
     if not isinstance(text, str):
         return ""
+        
+    # 1. Lowercase conversion: standardizes all text
     text = text.lower()
-    text = re.sub(r'[^a-z0-9\s]', '', text)
+    
+    # 2. Number cleanup: Removes numbers which are usually noise for generic intent classification
+    text = re.sub(r'\d+', '', text)
+    
+    # 3. Punctuation & Special Character removal: Replaces them with space
+    text = re.sub(r'[^\w\s]', ' ', text)
+    
+    # 4. Whitespace normalization: Cleans up multiple spaces
     text = re.sub(r'\s+', ' ', text).strip()
-    words = text.split()
-    clean_words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
+    
+    # 5. Tokenization: Splits text into individual words safely
+    try:
+        words = word_tokenize(text)
+    except LookupError:
+        words = text.split() # Fallback if punkt is missing
+    
+    clean_words = []
+    for word in words:
+        # 6. Typo & Abbreviation handling
+        word = TYPO_CORRECTIONS.get(word, word)
+        
+        # 7. Stopword removal (excluding important question words)
+        if word not in stop_words:
+            # 8. Lemmatization: Reduces words to their base dictionary form (e.g., 'courses' -> 'course')
+            lemma = lemmatizer.lemmatize(word)
+            clean_words.append(lemma)
+            
+    # 9. Rejoin into a single normalized string
     return ' '.join(clean_words)
 
 # --- 2. LOGGING SECTION ---
-def log_low_confidence_query(user_input, max_prob):
+def log_low_confidence_query(user_input, max_prob, predicted_intent="UNKNOWN"):
     """
-    Logs failed or low-confidence queries to a file for future dataset improvement.
+    Logs failed, nonsense, or low-confidence queries to a file for future dataset improvement.
+    This is critical for finding out what students are asking that the bot doesn't know!
     """
     with open("unanswered_queries_log.txt", "a", encoding="utf-8") as f:
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        f.write(f"[{timestamp}] Confidence: {max_prob*100:.1f}% | Query: {user_input}\n")
+        if max_prob == 0.0:
+            f.write(f"[{timestamp}] NONSENSE/UNRECOGNIZED | Query: {user_input}\n")
+        else:
+            f.write(f"[{timestamp}] LOW CONFIDENCE ({max_prob*100:.1f}%) | Guessed: {predicted_intent} | Query: {user_input}\n")
 
 # --- 3. MODEL EVALUATION & TESTING SECTION ---
 def test_sample_queries(model, vectorizer):
@@ -110,14 +169,42 @@ def train_and_evaluate_model():
     print("Splitting data into train and test sets (80/20)...")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Vectorization
-    vectorizer = TfidfVectorizer(ngram_range=(1, 2))
+    # 2. Optimized TF-IDF Vectorization
+    # - ngram_range=(1, 3): Captures single words, pairs, and triplets (e.g. "computer science department")
+    # - max_df=0.90: Ignores terms that appear in >90% of documents (corpus-specific stopwords)
+    # - min_df=2: Ignores terms that appear in less than 2 documents (removes one-off weird typos)
+    # - sublinear_tf=True: Replaces raw term frequency with 1 + log(tf). Reduces dominance of repeated words.
+    # - norm='l2': Normalizes vectors to length 1, ensuring short and long questions are comparable.
+    # - token_pattern: The default ignores single letters. We use \b\w+\b to keep "i" and other single-character intents if needed.
+    vectorizer = TfidfVectorizer(
+        ngram_range=(1, 3),
+        max_df=0.90,
+        min_df=2,
+        sublinear_tf=True,
+        norm='l2',
+        token_pattern=r"(?u)\b\w+\b"
+    )
     X_train_vec = vectorizer.fit_transform(X_train)
     X_test_vec = vectorizer.transform(X_test) # Transform only! Prevent data leakage.
     
-    # Train the Model
-    print("Training MultinomialNB model...")
-    model = MultinomialNB()
+    # 3. Advanced NLP Intent Classifier: Logistic Regression
+    # WHY LOGISTIC REGRESSION OUTPERFORMS NAIVE BAYES FOR NLP:
+    # - Naive Bayes treats words independently. It struggles when intents share overlapping vocabulary (e.g., "when is the exam" vs "where is the exam").
+    # - Logistic Regression mathematically assigns positive/negative weights to TF-IDF n-grams. It learns that "where" pushes the prediction 
+    #   towards 'location', while "when" pushes it towards 'schedule', yielding much higher accuracy and confidence scores.
+    print("Training Professionally Tuned Logistic Regression model...")
+    
+    model = LogisticRegression(
+        # solver='lbfgs': The optimal, highly efficient solver for multiclass NLP datasets.
+        solver='lbfgs',
+        # C=1.0: Inverse of regularization strength. 1.0 is balanced to prevent overfitting to noisy student typos.
+        C=1.0, 
+        # class_weight='balanced': Automatically adjusts mathematical weights so smaller intent classes aren't ignored.
+        class_weight='balanced', 
+        # max_iter=1000: Gives the mathematical solver enough iterations to securely converge on the complex text data.
+        max_iter=1000
+        # multi_class is automatically handled by the solver in modern scikit-learn versions!
+    )
     model.fit(X_train_vec, y_train)
     
     print("\n===========================================")
@@ -135,7 +222,9 @@ def train_and_evaluate_model():
     # This proves the model is genuinely robust and not just lucky with the initial split.
     print("Running 5-Fold Cross Validation...")
     # Using a pipeline ensures no data leakage during cross-validation
-    pipeline = make_pipeline(TfidfVectorizer(ngram_range=(1, 2)), MultinomialNB())
+    pipeline_vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.90, min_df=2, sublinear_tf=True, norm='l2', token_pattern=r"(?u)\b\w+\b")
+    pipeline_model = LogisticRegression(solver='lbfgs', C=1.0, class_weight='balanced', max_iter=1000)
+    pipeline = make_pipeline(pipeline_vectorizer, pipeline_model)
     cv_scores = cross_val_score(pipeline, X, y, cv=5)
     print(f"Cross-Validation Accuracy Scores: {[round(score*100, 2) for score in cv_scores]}")
     print(f"Average CV Accuracy: {cv_scores.mean() * 100:.2f}%\n")
@@ -210,24 +299,51 @@ responses = {
 
 def get_chatbot_response(user_input):
     if model is None or vectorizer is None:
-        return "Sorry, the AI model failed to load."
+        return "Sorry, the AI model failed to load.", 0.0
         
     clean_input = preprocess_text(user_input)
+    
+    # --- 1. NONSENSE / EMPTY INPUT HANDLING ---
     if not clean_input:
-        return "I didn't quite catch that. Could you use standard words?"
+        log_low_confidence_query(user_input, 0.0, "NONSENSE")
+        fallback_nonsense = [
+            "I didn't quite catch any standard words there. Could you rephrase?",
+            "I only understand standard English phrases. Can you try typing that again?",
+            "Sorry, that doesn't look like a question about university services."
+        ]
+        return random.choice(fallback_nonsense), 0.0
         
+    # Vectorize and Predict
     user_vec = vectorizer.transform([clean_input])
     probabilities = model.predict_proba(user_vec)[0]
     max_prob = max(probabilities)
+    prediction = model.classes_[probabilities.argmax()]
     
-    CONFIDENCE_THRESHOLD = 0.15 
+    # --- 2. PROFESSIONAL CONFIDENCE THRESHOLD LOGIC ---
+    # Why this matters: Logistic Regression with TF-IDF will ALWAYS pick a class, even if the input is "i love football".
+    # By setting a threshold, we force the bot to admit ignorance instead of lying or providing irrelevant info.
+    # 
+    # Tuning Guide:
+    # - Too low (e.g., 0.15): Bot guesses randomly on unrelated topics.
+    # - Too high (e.g., 0.85): Bot refuses to answer perfectly valid, but slightly uniquely phrased questions.
+    # - Balanced (0.45 - 0.60): The optimal sweet spot for 15-class NLP intent classification.
+    CONFIDENCE_THRESHOLD = 0.45 
     
     if max_prob < CONFIDENCE_THRESHOLD:
-        log_low_confidence_query(user_input, max_prob) # Log the failure
-        return "I'm not quite sure I understand. Could you rephrase your question about university services?"
+        log_low_confidence_query(user_input, max_prob, prediction) # Log the failure so developers can add it to the dataset!
         
-    prediction = model.classes_[probabilities.argmax()]
-    return random.choice(responses.get(prediction, ["Sorry, I don't have information on that."]))
+        # --- 3. MULTIPLE FALLBACK RESPONSES ---
+        # Randomizing fallbacks makes the bot feel much more natural and human-like
+        fallback_responses = [
+            "I'm not entirely sure about that. Could you rephrase your question?",
+            "I don't have enough confidence to answer that accurately. Are you asking about courses, fees, or something else?",
+            "I'm still learning! Could you ask that in a slightly different way?",
+            "I didn't quite get that. I specialize in university registration, schedules, locations, and admissions."
+        ]
+        return random.choice(fallback_responses), max_prob
+        
+    # --- 4. SUCCESSFUL RESPONSE ---
+    return random.choice(responses.get(prediction, ["Sorry, I don't have information on that."])), max_prob
 
 # --- 6. GUI SECTION ---
 def send_message(event=None):
@@ -237,8 +353,14 @@ def send_message(event=None):
     chat_area.config(state=tk.NORMAL)
     chat_area.insert(tk.END, "You: " + user_input + "\n", "user_tag")
     
-    response = get_chatbot_response(user_input)
-    chat_area.insert(tk.END, "Bot: " + response + "\n\n", "bot_tag")
+    # Unpack the response AND the confidence score
+    response, confidence = get_chatbot_response(user_input)
+    
+    # 5. CONFIDENCE DISPLAY FOR DEBUGGING
+    # Appends the confidence score in brackets for the developer to see
+    debug_info = f" [Confidence: {confidence*100:.1f}%]" if confidence > 0 else " [Nonsense/Unknown]"
+    
+    chat_area.insert(tk.END, "Bot: " + response + debug_info + "\n\n", "bot_tag")
     chat_area.config(state=tk.DISABLED)
     chat_area.yview(tk.END) 
     entry.delete(0, tk.END)
@@ -248,8 +370,9 @@ def send_message(event=None):
         user_vec = vectorizer.transform([clean_input])
         prediction = model.classes_[model.predict_proba(user_vec)[0].argmax()]
         max_prob = max(model.predict_proba(user_vec)[0])
-        if prediction == "bye" and max_prob >= 0.15:
-            root.after(1500, root.destroy)
+        # Use the updated professional threshold to decide when to quit
+        if prediction == "bye" and max_prob >= 0.45:
+            root.after(2000, root.destroy)
 
 # GUI Setup
 root = tk.Tk()
