@@ -20,6 +20,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.pipeline import make_pipeline
+from sklearn.calibration import CalibratedClassifierCV
 
 # NLTK imports
 import nltk
@@ -117,11 +118,11 @@ def log_low_confidence_query(user_input, max_prob, predicted_intent="UNKNOWN"):
             f.write(f"[{timestamp}] LOW CONFIDENCE ({max_prob*100:.1f}%) | Guessed: {predicted_intent} | Query: {user_input}\n")
 
 # --- 3. MODEL EVALUATION & TESTING SECTION ---
-def test_sample_queries(model, vectorizer):
+def test_sample_queries(model, vectorizer, model_name="Model"):
     """
     Tests the model with manual, realistic student queries to evaluate predictions.
     """
-    print("\n--- 🧪 MANUAL SAMPLE QUERY TESTING ---")
+    print(f"\n--- 🧪 MANUAL SAMPLE QUERY TESTING ({model_name}) ---")
     test_queries = [
         "when is the deadline to pay my tuition?",
         "where is the computer lab located?",
@@ -144,7 +145,7 @@ def test_sample_queries(model, vectorizer):
         
         print(f"Query: '{query}'")
         print(f"-> Predicted Intent: {pred} (Confidence Score: {max_prob*100:.1f}%)")
-        if max_prob < 0.15:
+        if max_prob < 0.60:  # Updated to new calibrated threshold
             print("-> ⚠️ LOW CONFIDENCE (Fallback would trigger)")
         print("-" * 30)
 
@@ -192,9 +193,9 @@ def train_and_evaluate_model():
     # - Naive Bayes treats words independently. It struggles when intents share overlapping vocabulary (e.g., "when is the exam" vs "where is the exam").
     # - Logistic Regression mathematically assigns positive/negative weights to TF-IDF n-grams. It learns that "where" pushes the prediction 
     #   towards 'location', while "when" pushes it towards 'schedule', yielding much higher accuracy and confidence scores.
-    print("Training Professionally Tuned Logistic Regression model...")
+    print("Training Professionally Tuned Base Logistic Regression model...")
     
-    model = LogisticRegression(
+    base_model = LogisticRegression(
         # solver='lbfgs': The optimal, highly efficient solver for multiclass NLP datasets.
         solver='lbfgs',
         # C=1.0: Inverse of regularization strength. 1.0 is balanced to prevent overfitting to noisy student typos.
@@ -205,7 +206,56 @@ def train_and_evaluate_model():
         max_iter=1000
         # multi_class is automatically handled by the solver in modern scikit-learn versions!
     )
-    model.fit(X_train_vec, y_train)
+    base_model.fit(X_train_vec, y_train)
+    
+    # --- PROBABILITY CALIBRATION ---
+    # EXPLANATION OF PROBABILITY CALIBRATION:
+    # Probability calibration transforms model outputs into true probabilities. 
+    # If a calibrated model predicts an intent with 70% confidence, it means that 
+    # 70% of the time it makes this prediction, it is actually correct.
+    #
+    # WHY LOGISTIC REGRESSION PROBABILITIES MAY BE POORLY CALIBRATED:
+    # Logistic Regression minimizes log-loss. In datasets with overlapping vocabulary 
+    # or unbalanced classes, it can become overconfident in its predictions. A 90% 
+    # confidence score might actually mean it's only 50% sure.
+    # 
+    # WHY CALIBRATION IMPROVES CHATBOT RELIABILITY:
+    # By mapping the model's output to actual probabilities, our fallback threshold 
+    # (e.g., < 0.60) becomes incredibly robust. Uncalibrated models often bypass 
+    # fallbacks by outputting false high-confidence scores for nonsense inputs.
+    #
+    # BEST PRACTICES FOR CALIBRATED NLP CLASSIFIERS:
+    # 1. Use 'cv=5' (Cross-Validation) so calibration is done on unseen fold data.
+    # 2. 'sigmoid' (Platt scaling) is best for small/medium datasets.
+    # 3. 'isotonic' can be used if you have thousands of samples, but overfits small data.
+    #
+    # COMMON MISTAKES TO AVOID:
+    # - Using 'isotonic' on a tiny dataset (causes severe overfitting).
+    # - Setting cv="prefit" without actually having an independently pre-fitted model.
+    
+    print("\n--- ⚖️ PROBABILITY CALIBRATION (METHOD COMPARISON) ---")
+    print("Training Calibrated Models...")
+    
+    # 3a. Sigmoid Calibration
+    print("1. Training Sigmoid (Platt) Calibrated Model...")
+    sigmoid_calibrated_model = CalibratedClassifierCV(estimator=base_model, method='sigmoid', cv=5)
+    sigmoid_calibrated_model.fit(X_train_vec, y_train)
+    
+    # 3b. Isotonic Calibration
+    print("2. Training Isotonic Calibrated Model...")
+    isotonic_calibrated_model = CalibratedClassifierCV(estimator=base_model, method='isotonic', cv=5)
+    isotonic_calibrated_model.fit(X_train_vec, y_train)
+    
+    # Select Sigmoid as the primary model (best practice for this type of classification)
+    print("-> Selecting 'sigmoid' calibration for production pipeline.")
+    model = sigmoid_calibrated_model
+    
+    print("\n===========================================")
+    print("   📊 CALIBRATION CONFIDENCE COMPARISON    ")
+    print("===========================================")
+    # 4. Confidence score testing before vs after calibration
+    test_sample_queries(base_model, vectorizer, "UNCALIBRATED Logistic Regression")
+    test_sample_queries(model, vectorizer, "CALIBRATED (Sigmoid) Logistic Regression")
     
     print("\n===========================================")
     print("        📊 MODEL EVALUATION RESULTS        ")
@@ -220,11 +270,12 @@ def train_and_evaluate_model():
     
     # 3. Cross-Validation: Evaluates model performance across 5 different subsets of the data
     # This proves the model is genuinely robust and not just lucky with the initial split.
-    print("Running 5-Fold Cross Validation...")
+    print("Running 5-Fold Cross Validation on CALIBRATED Model...")
     # Using a pipeline ensures no data leakage during cross-validation
     pipeline_vectorizer = TfidfVectorizer(ngram_range=(1, 3), max_df=0.90, min_df=2, sublinear_tf=True, norm='l2', token_pattern=r"(?u)\b\w+\b")
-    pipeline_model = LogisticRegression(solver='lbfgs', C=1.0, class_weight='balanced', max_iter=1000)
-    pipeline = make_pipeline(pipeline_vectorizer, pipeline_model)
+    pipeline_base_model = LogisticRegression(solver='lbfgs', C=1.0, class_weight='balanced', max_iter=1000)
+    pipeline_calibrated_model = CalibratedClassifierCV(estimator=pipeline_base_model, method='sigmoid', cv=3)
+    pipeline = make_pipeline(pipeline_vectorizer, pipeline_calibrated_model)
     cv_scores = cross_val_score(pipeline, X, y, cv=5)
     print(f"Cross-Validation Accuracy Scores: {[round(score*100, 2) for score in cv_scores]}")
     print(f"Average CV Accuracy: {cv_scores.mean() * 100:.2f}%\n")
@@ -258,8 +309,7 @@ def train_and_evaluate_model():
         print(f"Could not save confusion matrix plot: {e}")
     plt.close() # Close plot so script continues
     
-    # Run manual tests
-    test_sample_queries(model, vectorizer)
+    # (Manual tests were moved to run before model evaluation to compare calibrations)
 
     print("Saving model and vectorizer...")
     joblib.dump(model, MODEL_FILE)
@@ -323,11 +373,11 @@ def get_chatbot_response(user_input):
     # Why this matters: Logistic Regression with TF-IDF will ALWAYS pick a class, even if the input is "i love football".
     # By setting a threshold, we force the bot to admit ignorance instead of lying or providing irrelevant info.
     # 
-    # Tuning Guide:
-    # - Too low (e.g., 0.15): Bot guesses randomly on unrelated topics.
-    # - Too high (e.g., 0.85): Bot refuses to answer perfectly valid, but slightly uniquely phrased questions.
-    # - Balanced (0.45 - 0.60): The optimal sweet spot for 15-class NLP intent classification.
-    CONFIDENCE_THRESHOLD = 0.45 
+    # Tuning Guide for Calibrated Models:
+    # - Too low (e.g., 0.30): Bot might still guess randomly.
+    # - Too high (e.g., 0.85): Bot refuses perfectly valid, but slightly uniquely phrased questions.
+    # - Balanced (0.60 - 0.70): The optimal sweet spot for calibrated probabilities.
+    CONFIDENCE_THRESHOLD = 0.60 
     
     if max_prob < CONFIDENCE_THRESHOLD:
         log_low_confidence_query(user_input, max_prob, prediction) # Log the failure so developers can add it to the dataset!
@@ -371,7 +421,7 @@ def send_message(event=None):
         prediction = model.classes_[model.predict_proba(user_vec)[0].argmax()]
         max_prob = max(model.predict_proba(user_vec)[0])
         # Use the updated professional threshold to decide when to quit
-        if prediction == "bye" and max_prob >= 0.45:
+        if prediction == "bye" and max_prob >= 0.60:
             root.after(2000, root.destroy)
 
 # GUI Setup
