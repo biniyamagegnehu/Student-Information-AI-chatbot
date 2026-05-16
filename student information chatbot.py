@@ -446,11 +446,85 @@ responses = {
     "bye": ["Goodbye! Have a great day ahead.", "See you later! Good luck with your studies."]
 }
 
+# --- 5. CONVERSATIONAL MEMORY & CONTEXT HANDLING ---
+class ChatbotMemory:
+    """
+    Lightweight, non-deep-learning conversational memory system.
+    Tracks entities and intents for pronoun resolution (e.g., "it", "there").
+    """
+    def __init__(self):
+        self.last_entity = None
+        self.last_intent = None
+        self.last_interaction_time = None
+        # Context expires after 3 minutes to avoid weird carry-overs
+        self.EXPIRATION_SECONDS = 180 
+        
+        self.PRONOUNS = {"it", "they", "there", "that", "this", "he", "she"}
+        self.ENTITIES = {
+            "library", "registrar", "engineering", "dormitory", "dorm", "cs", 
+            "transcript", "fee", "tuition", "scholarship", "exam", "course", 
+            "hostel", "admission", "department", "office", "campus"
+        }
+
+    def extract_entity(self, text):
+        words = text.split()
+        for word in words:
+            if word in self.ENTITIES:
+                return word
+        return None
+
+    def resolve_context(self, text):
+        """Replaces pronouns with the remembered entity if the context is fresh."""
+        if self.last_interaction_time:
+            time_diff = (datetime.now() - self.last_interaction_time).total_seconds()
+            if time_diff > self.EXPIRATION_SECONDS:
+                self.clear_memory()
+                return text, False # Context expired
+                
+        words = text.split()
+        has_pronoun = any(word in self.PRONOUNS for word in words)
+        
+        if has_pronoun and self.last_entity:
+            # Replace pronouns with the tracked entity for the ML pipeline
+            resolved_words = [self.last_entity if w in self.PRONOUNS else w for w in words]
+            resolved_text = " ".join(resolved_words)
+            
+            # Log the context resolution for debugging
+            with open("context_memory_log.txt", "a", encoding="utf-8") as f:
+                f.write(f"[{datetime.now()}] Context Resolved: '{text}' -> '{resolved_text}'\n")
+                
+            return resolved_text, True
+            
+        return text, False
+        
+    def update_memory(self, text, intent):
+        """Updates the short-term memory with new entities."""
+        entity = self.extract_entity(text)
+        if entity:
+            self.last_entity = entity
+        self.last_intent = intent
+        self.last_interaction_time = datetime.now()
+        
+    def clear_memory(self):
+        """Resets the memory."""
+        self.last_entity = None
+        self.last_intent = None
+        self.last_interaction_time = None
+
+# Initialize memory globally
+chat_memory = ChatbotMemory()
+
+# --- 6. PREDICTION & RESPONSE GENERATION ---
 def get_chatbot_response(user_input):
     if model is None or vectorizer is None:
         return "Sorry, the AI model failed to load.", 0.0
         
-    clean_input = preprocess_text(user_input)
+    # --- A. CONTEXT RESOLUTION ---
+    # Try to resolve pronouns like "it" or "there" using the short-term memory
+    # We do this BEFORE heavy NLP preprocessing so we can detect standard English pronouns.
+    context_aware_input, used_context = chat_memory.resolve_context(user_input.lower())
+    
+    clean_input = preprocess_text(context_aware_input)
     
     # --- 1. NONSENSE / EMPTY INPUT HANDLING ---
     if not clean_input:
@@ -489,12 +563,39 @@ def get_chatbot_response(user_input):
             "I'm still learning! Could you ask that in a slightly different way?",
             "I didn't quite get that. I specialize in university registration, schedules, locations, and admissions."
         ]
+        
+        # If context was used but it still failed, the memory might be stale or wrong. Clear it.
+        if used_context:
+            chat_memory.clear_memory()
+            
         return random.choice(fallback_responses), max_prob
         
-    # --- 4. SUCCESSFUL RESPONSE ---
+    # --- B. MEMORY UPDATE ---
+    # If the bot successfully understood the question, update the short-term memory with the new context!
+    chat_memory.update_memory(context_aware_input, prediction)
+    
+    # --- C. CONTEXT-AWARE RESPONSE GENERATION ---
+    # If we know the user is talking about a specific entity (e.g. library), we provide 
+    # a highly specific answer rather than the generic intent response.
+    dynamic_responses = {
+        ("location", "library"): "The main library is located in Block 5 near the main gate.",
+        ("schedule", "library"): "The library is open from 8:00 AM to 10:00 PM on weekdays, and closes at 5:00 PM on weekends.",
+        ("location", "registrar"): "The registrar office is in the Admin Building, Ground Floor.",
+        ("schedule", "registrar"): "The registrar office is open from 9:00 AM to 4:00 PM.",
+        ("location", "engineering"): "The engineering department is located in Block 3.",
+        ("contacts", "engineering"): "The head of the engineering department can be reached at eng_head@university.edu.",
+        ("fees", "transcript"): "Transcripts cost 50 Birr per copy. You can pay at the registrar.",
+        ("location", "transcript"): "You can pick up your transcript from the main registrar office."
+    }
+    
+    entity = chat_memory.last_entity
+    if entity and (prediction, entity) in dynamic_responses:
+        return dynamic_responses[(prediction, entity)], max_prob
+        
+    # --- 4. SUCCESSFUL GENERIC RESPONSE ---
     return random.choice(responses.get(prediction, ["Sorry, I don't have information on that."])), max_prob
 
-# --- 6. GUI SECTION ---
+# --- 7. GUI SECTION ---
 def send_message(event=None):
     user_input = entry.get().strip()
     if user_input == "": return
