@@ -22,6 +22,8 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.pipeline import make_pipeline
 from sklearn.calibration import CalibratedClassifierCV
 
+import university_db as db
+
 # Fuzzy String Matching for Typo Correction
 try:
     from rapidfuzz import process, fuzz
@@ -285,9 +287,11 @@ def test_sample_queries(model, vectorizer, model_name="Model"):
         "when is the software engineering exam",      # Entity: software engineering
         "i need transcript for semester 2",           # Entity: semester 2
         "where can i find block c",                   # Entity: block c
-        "what is professor john's office location",   # Entity: professor john
+        "what is the tuition fee for engineering",    # Entity: engineering
+        "contact number for computer science department", # Entity: computer science
+        "who is the registrar",                       # Entity: registrar
+        "hostel availability for freshmen",           # General Info
         "my student id is 12345",                     # Entity: 12345 (Regex)
-        "tuition payment deadline for engineering",   # Entity: tuition
         "asdfghjkl",                                  # Adversarial: Pure nonsense
     ]
     
@@ -680,40 +684,55 @@ def get_chatbot_response(user_input):
     # If the bot successfully understood the question, update the short-term memory with the new context!
     chat_memory.update_memory(context_aware_input, prediction, extracted_entities)
     
-    # --- C. CONTEXT-AWARE & ENTITY-AWARE RESPONSE GENERATION ---
+    # --- C. DYNAMIC DATABASE RETRIEVAL & RESPONSE GENERATION ---
     
     # 1. First priority: Handle critical extracted entities independently of ML intent!
     for label, text_val in extracted_entities:
         if label == "STUDENT_ID":
             return f"I have noted your Student ID: {text_val}. What specific account information do you need?", max_prob
         if label == "INSTRUCTOR":
+            # Dynamically fetch instructor info from the database
+            contact_info = db.get_contact(text_val)
+            if contact_info:
+                return contact_info, max_prob
             return f"{text_val.title()}'s office is located in the main Faculty Building, Room 204.", max_prob
         if label == "SEMESTER":
             if prediction in ["results", "transcript", "courses"]:
                 return f"Your transcript and grades for {text_val} will be updated on the SIS portal shortly.", max_prob
                 
-    # 2. Second priority: Dynamic Intent + Entity combination
-    dynamic_responses = {
-        ("location", "library"): "The main library is located in Block 5 near the main gate.",
-        ("schedule", "library"): "The library is open from 8:00 AM to 10:00 PM on weekdays, and closes at 5:00 PM on weekends.",
-        ("location", "registrar"): "The registrar office is in the Admin Building, Ground Floor.",
-        ("location", "reg office"): "The registrar office is in the Admin Building, Ground Floor.",
-        ("schedule", "registrar"): "The registrar office is open from 9:00 AM to 4:00 PM.",
-        ("location", "engineering"): "The engineering department is located in Block 3.",
-        ("contacts", "engineering"): "The head of the engineering department can be reached at eng_head@university.edu.",
-        ("location", "computer science"): "The computer science department is in Block 1, second floor.",
-        ("location", "cs dept"): "The computer science department is in Block 1, second floor.",
-        ("location", "block c"): "Block C is located near the eastern gate, next to the sports field.",
-        ("fees", "transcript"): "Transcripts cost 50 Birr per copy. You can pay at the registrar.",
-        ("location", "transcript"): "You can pick up your transcript from the main registrar office."
-    }
-    
+    # 2. Second priority: Dynamic Intent + Entity combination via SQLite Database
     entity = chat_memory.last_entity
-    if entity and (prediction, entity) in dynamic_responses:
-        return dynamic_responses[(prediction, entity)], max_prob
+    
+    if entity:
+        db_res = None
+        # Route the query to the correct database table based on the NLP intent
+        if prediction == "location":
+            db_res = db.get_location(entity)
+        elif prediction == "fees":
+            db_res = db.get_fee(entity)
+        elif prediction == "contacts":
+            db_res = db.get_contact(entity)
+        elif prediction == "schedule" or prediction == "exam":
+            db_res = db.get_schedule(entity)
+            
+        if db_res:
+            return db_res, max_prob
+            
+    # 3. Third priority: Check general info table for specific topics
+    if entity:
+        general_res = db.get_general_info(entity)
+        if general_res: 
+            return general_res, max_prob
         
-    # --- 4. SUCCESSFUL GENERIC RESPONSE ---
-    return random.choice(responses.get(prediction, ["Sorry, I don't have information on that."])), max_prob
+    # Check if any raw word matches a general DB topic (e.g., "hostel availability")
+    for word in context_aware_input.split():
+        general_res = db.get_general_info(word)
+        if general_res: 
+            return general_res, max_prob
+        
+    # --- 4. SUCCESSFUL GENERIC RESPONSE (FALLBACK) ---
+    # If the database lacked the specific entity info, we gracefully fallback to the static responses.
+    return random.choice(responses.get(prediction, ["Sorry, I don't have detailed information on that."])), max_prob
 
 # --- 7. GUI SECTION ---
 def send_message(event=None):
