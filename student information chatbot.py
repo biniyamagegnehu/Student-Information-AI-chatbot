@@ -9,6 +9,7 @@ import pandas as pd
 import tkinter as tk
 from tkinter import scrolledtext
 from datetime import datetime
+import unicodedata
 
 # Visualization and Evaluation Imports
 import matplotlib.pyplot as plt
@@ -91,6 +92,75 @@ nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
 nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
+
+# --- 1.5 INPUT SANITIZATION & VALIDATION ---
+class InputValidator:
+    """
+    Professionally sanitizes and validates user input before it hits the NLP pipeline.
+    Prevents crashes, SQL injection attempts, XSS, and spam attacks.
+    """
+    MAX_INPUT_LENGTH = 150
+    
+    @staticmethod
+    def validate_and_sanitize(text):
+        """
+        Validates input and strips harmful/noisy data.
+        Returns: (is_valid: bool, sanitized_text: str, error_message: str)
+        """
+        if not text or not text.strip():
+            return False, "", "Please enter a valid message."
+            
+        # 1. Unicode Normalization (converts stylized fonts/emojis to standard ASCII if possible)
+        text = unicodedata.normalize('NFKC', text)
+            
+        # 2. Length Validation
+        if len(text) > InputValidator.MAX_INPUT_LENGTH:
+            InputValidator.log_suspicious(text, "EXCEEDS_MAX_LENGTH")
+            return False, "", f"Your message is too long. Please keep it under {InputValidator.MAX_INPUT_LENGTH} characters."
+            
+        # 3. HTML/Script Tag Removal (Basic XSS protection)
+        if re.search(r'<[^>]+>', text):
+            InputValidator.log_suspicious(text, "HTML_TAGS_DETECTED")
+            text = re.sub(r'<[^>]+>', '', text) # Strip the tags
+            
+        # 4. URL Protection
+        if re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text):
+            InputValidator.log_suspicious(text, "URL_DETECTED")
+            return False, "", "For security reasons, please do not include links or URLs in your messages."
+            
+        # 5. Email Stripping (Privacy protection)
+        if re.search(r'[\w\.-]+@[\w\.-]+', text):
+            InputValidator.log_suspicious(text, "EMAIL_DETECTED")
+            text = re.sub(r'[\w\.-]+@[\w\.-]+', '', text) 
+            
+        # 6. SQL Injection/Command Protection (Basic filtering)
+        # We look for dangerous SQL keywords followed by punctuation or comments
+        sql_patterns = [r'\bdrop\b\s+table', r'\bselect\b.*\bfrom\b', r'--', r';']
+        for pattern in sql_patterns:
+            if re.search(pattern, text.lower()):
+                InputValidator.log_suspicious(text, "SQL_INJECTION_PATTERN")
+                text = re.sub(pattern, '', text.lower()) # Neutralize it
+                
+        # 7. Repeated Character / Spam Filtering
+        # Reduces extreme spam like "zzzzzzzzzz" or "!!!!!!!!!" down to 2 characters max
+        text = re.sub(r'(.)\1{3,}', r'\1\1', text) 
+        
+        # 8. Excessive Symbol Cleanup & Emoji Removal
+        # Keeps only alphanumeric characters, spaces, and basic punctuation
+        text = re.sub(r'[^\w\s\.\?\!\,\-\'\"]', ' ', text)
+        
+        # 9. Whitespace Normalization
+        text = re.sub(r'\s+', ' ', text).strip()
+        
+        if not text:
+            return False, "", "Your message contained invalid characters. Please try again with standard text."
+            
+        return True, text, ""
+        
+    @staticmethod
+    def log_suspicious(text, reason):
+        with open("suspicious_input_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now()}] [{reason}] {text}\n")
 
 # --- 1. TEXT PREPROCESSING SECTION ---
 lemmatizer = WordNetLemmatizer()
@@ -625,10 +695,15 @@ def get_chatbot_response(user_input):
     if model is None or vectorizer is None:
         return "Sorry, the AI model failed to load.", 0.0
         
+    # --- 0. INPUT VALIDATION & SANITIZATION ---
+    is_valid, sanitized_input, error_msg = InputValidator.validate_and_sanitize(user_input)
+    if not is_valid:
+        return error_msg, 0.0
+        
     # --- A. CONTEXT RESOLUTION ---
     # Try to resolve pronouns like "it" or "there" using the short-term memory
     # We do this BEFORE heavy NLP preprocessing so we can detect standard English pronouns.
-    context_aware_input, used_context = chat_memory.resolve_context(user_input.lower())
+    context_aware_input, used_context = chat_memory.resolve_context(sanitized_input.lower())
     
     # --- B. NER EXTRACTION ---
     extracted_entities = extract_all_entities(context_aware_input)
