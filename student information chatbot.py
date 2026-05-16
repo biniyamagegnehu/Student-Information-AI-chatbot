@@ -734,68 +734,141 @@ def get_chatbot_response(user_input):
     # If the database lacked the specific entity info, we gracefully fallback to the static responses.
     return random.choice(responses.get(prediction, ["Sorry, I don't have detailed information on that."])), max_prob
 
-# --- 7. GUI SECTION ---
-def send_message(event=None):
-    user_input = entry.get().strip()
-    if user_input == "": return
-
-    chat_area.config(state=tk.NORMAL)
-    chat_area.insert(tk.END, "You: " + user_input + "\n", "user_tag")
-    
-    # Unpack the response AND the confidence score
-    response, confidence = get_chatbot_response(user_input)
-    
-    # 5. CONFIDENCE DISPLAY FOR DEBUGGING
-    # Appends the confidence score in brackets for the developer to see
-    debug_info = f" [Confidence: {confidence*100:.1f}%]" if confidence > 0 else " [Nonsense/Unknown]"
-    
-    chat_area.insert(tk.END, "Bot: " + response + debug_info + "\n\n", "bot_tag")
-    chat_area.config(state=tk.DISABLED)
-    chat_area.yview(tk.END) 
-    entry.delete(0, tk.END)
-
-    clean_input = preprocess_text(user_input)
-    if clean_input:
-        user_vec = vectorizer.transform([clean_input])
-        prediction = model.classes_[model.predict_proba(user_vec)[0].argmax()]
-        max_prob = max(model.predict_proba(user_vec)[0])
-        # Use the updated professional threshold to decide when to quit
-        if prediction == "bye" and max_prob >= 0.60:
-            root.after(2000, root.destroy)
-
-# GUI Setup
-root = tk.Tk()
-root.title("AI Student Chatbot - Evaluated Edition")
-root.geometry("550x650")
-root.config(bg="#1e1e2f")
-
-title = tk.Label(root, text="🎓 AI Student Information Chatbot", font=("Helvetica", 16, "bold"), bg="#1e1e2f", fg="white")
-title.pack(pady=15)
-
-info = tk.Label(root, text="I can help with: Registration, Courses, Schedule, Exams, Locations,\nFees, Scholarships, Hostels, Admissions, Contacts, Results, and Holidays.", font=("Helvetica", 10), bg="#1e1e2f", fg="#cccccc", justify=tk.CENTER)
-info.pack(pady=5)
-
-chat_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=60, height=22, font=("Helvetica", 11), bg="#2b2b3c", fg="white", padx=10, pady=10)
-chat_area.pack(padx=15, pady=10)
-chat_area.tag_config("user_tag", foreground="#4CAF50") 
-chat_area.tag_config("bot_tag", foreground="#00bcd4")  
-
-chat_area.insert(tk.END, "Bot: Hello! I'm your AI campus assistant. How can I help you today? 😊\n\n", "bot_tag")
-chat_area.config(state=tk.DISABLED)
-
-input_frame = tk.Frame(root, bg="#1e1e2f")
-input_frame.pack(pady=10, fill=tk.X, padx=15)
-
-entry = tk.Entry(input_frame, width=45, font=("Helvetica", 12), bg="#3e3e50", fg="white", insertbackground="white")
-entry.pack(side=tk.LEFT, padx=5, ipady=5)
-entry.bind("<Return>", send_message)
-
-send_btn = tk.Button(input_frame, text="Send", command=send_message, bg="#4CAF50", fg="white", font=("Helvetica", 11, "bold"), width=8, activebackground="#45a049")
-send_btn.pack(side=tk.RIGHT, padx=5)
+# --- 7. MODERN GUI SECTION ---
+class ChatBotGUI:
+    """
+    Modern, Object-Oriented Tkinter GUI that emulates a real AI assistant app.
+    Features: Chat bubbles, dark mode, typing animations, and scrollable area.
+    """
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Campus AI Assistant - Professional Edition")
+        self.master.geometry("600x750")
+        
+        # --- THEME CONSTANTS (Modern Dark Mode) ---
+        self.BG_COLOR = "#0F111A"           # Deep dark blue/black background
+        self.TEXT_BG = "#1A1D2D"            # Slightly lighter panel background
+        self.USER_BG = "#0A84FF"            # iOS style vibrant blue
+        self.BOT_BG = "#2B2F42"             # Distinct grey-blue for bot
+        self.TEXT_COLOR = "#FFFFFF"         # Pure white text
+        self.SUBTEXT_COLOR = "#8E8E93"      # Subtle grey for timestamps
+        self.WARNING_COLOR = "#FF9F0A"      # Orange for low confidence warnings
+        
+        # Modern Fonts
+        self.FONT_MAIN = ("Helvetica", 11)
+        self.FONT_TITLE = ("Helvetica", 16, "bold")
+        self.FONT_SUB = ("Helvetica", 9)
+        
+        self.master.config(bg=self.BG_COLOR)
+        
+        self._build_ui()
+        self._insert_bot_message("Hello! 👋 I'm your AI campus assistant. How can I help you today?")
+        
+    def _build_ui(self):
+        # 1. Header Frame
+        header_frame = tk.Frame(self.master, bg=self.BG_COLOR)
+        header_frame.pack(fill=tk.X, pady=15, padx=20)
+        
+        title_label = tk.Label(header_frame, text="🎓 Campus AI", font=self.FONT_TITLE, bg=self.BG_COLOR, fg=self.TEXT_COLOR)
+        title_label.pack(side=tk.LEFT)
+        
+        clear_btn = tk.Button(header_frame, text="🗑️ Clear Chat", bg="#FF453A", fg="white", font=("Helvetica", 9, "bold"), relief=tk.FLAT, command=self.clear_chat, cursor="hand2", padx=10, pady=3)
+        clear_btn.pack(side=tk.RIGHT)
+        
+        # 2. Chat Area (Scrollable Conversation History)
+        self.chat_area = scrolledtext.ScrolledText(
+            self.master, wrap=tk.WORD, bg=self.TEXT_BG, fg=self.TEXT_COLOR, 
+            font=self.FONT_MAIN, borderwidth=0, highlightthickness=0, padx=15, pady=15
+        )
+        self.chat_area.pack(expand=True, fill=tk.BOTH, padx=20, pady=5)
+        self.chat_area.config(state=tk.DISABLED)
+        
+        # Configure Chat Bubble Tags
+        # By adding margins (lmargin1, rmargin), we constrain text width to simulate message bubbles.
+        self.chat_area.tag_config("user_msg", justify="right", foreground=self.TEXT_COLOR, background=self.USER_BG, lmargin1=100, lmargin2=100, rmargin=10, spacing1=5, spacing3=5)
+        self.chat_area.tag_config("bot_msg", justify="left", foreground=self.TEXT_COLOR, background=self.BOT_BG, lmargin1=10, lmargin2=10, rmargin=100, spacing1=5, spacing3=5)
+        self.chat_area.tag_config("warning_msg", justify="left", foreground=self.BG_COLOR, background=self.WARNING_COLOR, lmargin1=10, lmargin2=10, rmargin=100, spacing1=5, spacing3=5)
+        self.chat_area.tag_config("timestamp", justify="center", foreground=self.SUBTEXT_COLOR, font=self.FONT_SUB, spacing1=10, spacing3=5)
+        
+        # 3. Status Bar
+        self.status_var = tk.StringVar()
+        self.status_var.set("🟢 Online & Connected to DB")
+        status_bar = tk.Label(self.master, textvariable=self.status_var, font=self.FONT_SUB, bg=self.BG_COLOR, fg=self.SUBTEXT_COLOR, anchor="w")
+        status_bar.pack(fill=tk.X, padx=25, pady=(0, 5))
+        
+        # 4. Input Area
+        input_frame = tk.Frame(self.master, bg=self.BG_COLOR)
+        input_frame.pack(fill=tk.X, pady=(5, 20), padx=20)
+        
+        self.entry = tk.Entry(input_frame, font=self.FONT_MAIN, bg=self.TEXT_BG, fg=self.TEXT_COLOR, insertbackground="white", relief=tk.FLAT)
+        self.entry.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, ipady=12, padx=(0, 10))
+        self.entry.bind("<Return>", self._handle_user_input)
+        
+        send_btn = tk.Button(input_frame, text="Send 🚀", bg=self.USER_BG, fg="white", font=("Helvetica", 11, "bold"), relief=tk.FLAT, command=self._handle_user_input, cursor="hand2")
+        send_btn.pack(side=tk.RIGHT, ipadx=15, ipady=8)
+        
+    def _handle_user_input(self, event=None):
+        msg = self.entry.get().strip()
+        if not msg: return
+        
+        self.entry.delete(0, tk.END)
+        self._insert_user_message(msg)
+        
+        # Show typing indicator
+        self.status_var.set("💬 Bot is typing...")
+        self.master.update()
+        
+        # Simulate thinking delay (non-blocking) for a realistic AI feel
+        self.master.after(600, lambda: self._process_bot_response(msg))
+        
+    def _process_bot_response(self, user_msg):
+        # Fetch actual AI response from the ML/DB pipeline
+        response, confidence = get_chatbot_response(user_msg)
+        
+        # Determine styling based on confidence
+        is_warning = (confidence < 0.60 and confidence > 0.0) 
+        
+        self.status_var.set(f"🟢 Online | Last Intent Confidence: {confidence*100:.1f}%")
+        self._insert_bot_message(response, warning=is_warning)
+        
+        # Auto-close on goodbye
+        clean_input = preprocess_text(user_msg)
+        if clean_input and not is_warning:
+            user_vec = vectorizer.transform([clean_input])
+            prediction = model.classes_[model.predict_proba(user_vec)[0].argmax()]
+            if prediction == "bye":
+                self.master.after(2000, self.master.destroy)
+        
+    def _insert_user_message(self, msg):
+        time_str = datetime.now().strftime("%H:%M")
+        self.chat_area.config(state=tk.NORMAL)
+        self.chat_area.insert(tk.END, f"\n{time_str}\n", "timestamp")
+        # Padding spaces so the background tag creates a visual bubble
+        self.chat_area.insert(tk.END, f"  {msg}  \n", "user_msg")
+        self.chat_area.config(state=tk.DISABLED)
+        self.chat_area.yview(tk.END)
+        
+    def _insert_bot_message(self, msg, warning=False):
+        time_str = datetime.now().strftime("%H:%M")
+        self.chat_area.config(state=tk.NORMAL)
+        self.chat_area.insert(tk.END, f"\n{time_str}\n", "timestamp")
+        tag = "warning_msg" if warning else "bot_msg"
+        self.chat_area.insert(tk.END, f"  {msg}  \n", tag)
+        self.chat_area.config(state=tk.DISABLED)
+        self.chat_area.yview(tk.END)
+        
+    def clear_chat(self):
+        self.chat_area.config(state=tk.NORMAL)
+        self.chat_area.delete('1.0', tk.END)
+        self.chat_area.config(state=tk.DISABLED)
+        chat_memory.clear_memory() # Clear the NLP context tracking
+        self._insert_bot_message("Memory cleared. How can I help you today? 😊")
 
 if __name__ == "__main__":
     if model is not None:
-        print("Starting GUI...")
+        print("Starting Professional AI GUI...")
+        root = tk.Tk()
+        app = ChatBotGUI(root)
         root.mainloop()
     else:
-        print("Chatbot could not start because the model failed to load or train.")
+        print("Chatbot could not start because the ML model failed to load or train.")
