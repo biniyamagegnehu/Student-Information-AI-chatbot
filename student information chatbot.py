@@ -37,6 +37,53 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
 # --- 0. SETUP & INITIALIZATION ---
+try:
+    import spacy
+    # Load lightweight spaCy model
+    nlp = spacy.load("en_core_web_sm")
+    HAS_SPACY = True
+    
+    # Add an EntityRuler to find specific University entities (before the default NER)
+    ruler = nlp.add_pipe("entity_ruler", before="ner")
+    
+    patterns = [
+        # Departments / Courses
+        {"label": "DEPARTMENT", "pattern": [{"LOWER": "computer"}, {"LOWER": "science"}]},
+        {"label": "DEPARTMENT", "pattern": [{"LOWER": "software"}, {"LOWER": "engineering"}]},
+        {"label": "DEPARTMENT", "pattern": [{"LOWER": "cs"}, {"LOWER": "dept", "OP": "?"}]},
+        {"label": "DEPARTMENT", "pattern": [{"LOWER": "engineering"}]},
+        {"label": "COURSE", "pattern": [{"LOWER": "se"}, {"LOWER": "course", "OP": "?"}]},
+        {"label": "COURSE", "pattern": [{"LOWER": "exam"}]},
+        
+        # Buildings / Locations
+        {"label": "BUILDING", "pattern": [{"LOWER": "block"}, {"LOWER": {"REGEX": "^[a-z0-9]+$"}}]},
+        {"label": "BUILDING", "pattern": [{"LOWER": "library"}]},
+        {"label": "BUILDING", "pattern": [{"LOWER": "hostel"}]},
+        
+        # Offices
+        {"label": "OFFICE", "pattern": [{"LOWER": "registrar"}]},
+        {"label": "OFFICE", "pattern": [{"LOWER": "reg"}, {"LOWER": "office"}]},
+        
+        # Instructors
+        {"label": "INSTRUCTOR", "pattern": [{"LOWER": {"IN": ["professor", "prof", "dr", "dr."]}}, {"IS_ALPHA": True}]},
+        
+        # Semesters
+        {"label": "SEMESTER", "pattern": [{"LOWER": "semester"}, {"LIKE_NUM": True}]},
+        
+        # Grades / Fees
+        {"label": "GPA", "pattern": [{"LOWER": "gpa"}]},
+        {"label": "PAYMENT", "pattern": [{"LOWER": "tuition"}]},
+        {"label": "PAYMENT", "pattern": [{"LOWER": "fee"}]}
+    ]
+    ruler.add_patterns(patterns)
+    
+except OSError:
+    print("Warning: spaCy model 'en_core_web_sm' not found. Run: python -m spacy download en_core_web_sm")
+    HAS_SPACY = False
+except ImportError:
+    print("Warning: spaCy not installed. Run: pip install spacy")
+    HAS_SPACY = False
+
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
@@ -161,7 +208,57 @@ def preprocess_text(text):
     # 9. Rejoin into a single normalized string
     return ' '.join(clean_words)
 
-# --- 2. LOGGING SECTION ---
+# --- 2. ENTITY EXTRACTION (NER) SECTION ---
+def extract_entities_regex(text):
+    """Fallback Regex Entity Extraction for items like Student IDs."""
+    entities = []
+    
+    # Student ID (e.g., 12345 or ID 12345)
+    id_match = re.search(r'\b\d{5,8}\b', text)
+    if id_match:
+        entities.append(("STUDENT_ID", id_match.group(0)))
+        
+    # Semester (fallback if spacy missed it)
+    sem_match = re.search(r'\bsemester\s+\d\b', text, re.IGNORECASE)
+    if sem_match:
+        entities.append(("SEMESTER", sem_match.group(0)))
+        
+    return entities
+
+def extract_all_entities(text):
+    """
+    Combines spaCy NER and Regex to find all entities in the user's query.
+    Returns a list of tuples: (LABEL, entity_text)
+    """
+    detected_entities = []
+    
+    # 1. spaCy Custom EntityRuler + Default NER
+    if HAS_SPACY:
+        doc = nlp(text)
+        for ent in doc.ents:
+            # We filter for only the labels we care about
+            if ent.label_ in ["DEPARTMENT", "BUILDING", "OFFICE", "COURSE", "INSTRUCTOR", "SEMESTER", "STUDENT_ID", "PAYMENT", "DATE", "TIME", "PERSON"]:
+                detected_entities.append((ent.label_, ent.text.lower()))
+    
+    # 2. Regex Fallbacks (Guaranteed exact matching for critical formats like IDs)
+    detected_entities.extend(extract_entities_regex(text))
+    
+    # 3. Deduplicate
+    unique_entities = []
+    seen = set()
+    for label, text_val in detected_entities:
+        if text_val not in seen:
+            seen.add(text_val)
+            unique_entities.append((label, text_val))
+            
+    # Log the entities if found
+    if unique_entities:
+        with open("ner_extraction_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now()}] Query: '{text}' -> Entities: {unique_entities}\n")
+            
+    return unique_entities
+
+# --- 3. LOGGING SECTION ---
 def log_low_confidence_query(user_input, max_prob, predicted_intent="UNKNOWN"):
     """
     Logs failed, nonsense, or low-confidence queries to a file for future dataset improvement.
@@ -184,14 +281,13 @@ def test_sample_queries(model, vectorizer, model_name="Model"):
     # These queries test if the bot actually generalized the concepts, or if it just 
     # memorized the training data's exact phrasing.
     test_queries = [
-        "regstration deadline",                       # Common missing vowel
-        "exam scheduel pls",                          # Transposed letters + abbreviation
-        "wher is librery",                            # Multiple typos in one query
-        "fee payment when???",                        # Punctuation spam + short structure
-        "cs dept location",                           # Multiple shorthand terms
-        "transcript urgently needed",                 # Proper word, out of order structure
-        "hostel avalability",                         # Missing letter
-        "admisson requirements",                      # Missing letter
+        "where is the computer science department",   # Entity: computer science
+        "when is the software engineering exam",      # Entity: software engineering
+        "i need transcript for semester 2",           # Entity: semester 2
+        "where can i find block c",                   # Entity: block c
+        "what is professor john's office location",   # Entity: professor john
+        "my student id is 12345",                     # Entity: 12345 (Regex)
+        "tuition payment deadline for engineering",   # Entity: tuition
         "asdfghjkl",                                  # Adversarial: Pure nonsense
     ]
     
@@ -467,6 +563,7 @@ class ChatbotMemory:
         }
 
     def extract_entity(self, text):
+        """Extracts fallback basic entities if NER missed them, but normally we rely on extract_all_entities."""
         words = text.split()
         for word in words:
             if word in self.ENTITIES:
@@ -497,11 +594,16 @@ class ChatbotMemory:
             
         return text, False
         
-    def update_memory(self, text, intent):
+    def update_memory(self, text, intent, entities):
         """Updates the short-term memory with new entities."""
-        entity = self.extract_entity(text)
-        if entity:
-            self.last_entity = entity
+        if entities:
+            # Save the very first extracted entity as the primary context for pronoun resolution
+            self.last_entity = entities[0][1]
+        else:
+            fallback = self.extract_entity(text)
+            if fallback:
+                self.last_entity = fallback
+                
         self.last_intent = intent
         self.last_interaction_time = datetime.now()
         
@@ -524,6 +626,10 @@ def get_chatbot_response(user_input):
     # We do this BEFORE heavy NLP preprocessing so we can detect standard English pronouns.
     context_aware_input, used_context = chat_memory.resolve_context(user_input.lower())
     
+    # --- B. NER EXTRACTION ---
+    extracted_entities = extract_all_entities(context_aware_input)
+    
+    # --- C. PREPROCESSING ---
     clean_input = preprocess_text(context_aware_input)
     
     # --- 1. NONSENSE / EMPTY INPUT HANDLING ---
@@ -572,18 +678,32 @@ def get_chatbot_response(user_input):
         
     # --- B. MEMORY UPDATE ---
     # If the bot successfully understood the question, update the short-term memory with the new context!
-    chat_memory.update_memory(context_aware_input, prediction)
+    chat_memory.update_memory(context_aware_input, prediction, extracted_entities)
     
-    # --- C. CONTEXT-AWARE RESPONSE GENERATION ---
-    # If we know the user is talking about a specific entity (e.g. library), we provide 
-    # a highly specific answer rather than the generic intent response.
+    # --- C. CONTEXT-AWARE & ENTITY-AWARE RESPONSE GENERATION ---
+    
+    # 1. First priority: Handle critical extracted entities independently of ML intent!
+    for label, text_val in extracted_entities:
+        if label == "STUDENT_ID":
+            return f"I have noted your Student ID: {text_val}. What specific account information do you need?", max_prob
+        if label == "INSTRUCTOR":
+            return f"{text_val.title()}'s office is located in the main Faculty Building, Room 204.", max_prob
+        if label == "SEMESTER":
+            if prediction in ["results", "transcript", "courses"]:
+                return f"Your transcript and grades for {text_val} will be updated on the SIS portal shortly.", max_prob
+                
+    # 2. Second priority: Dynamic Intent + Entity combination
     dynamic_responses = {
         ("location", "library"): "The main library is located in Block 5 near the main gate.",
         ("schedule", "library"): "The library is open from 8:00 AM to 10:00 PM on weekdays, and closes at 5:00 PM on weekends.",
         ("location", "registrar"): "The registrar office is in the Admin Building, Ground Floor.",
+        ("location", "reg office"): "The registrar office is in the Admin Building, Ground Floor.",
         ("schedule", "registrar"): "The registrar office is open from 9:00 AM to 4:00 PM.",
         ("location", "engineering"): "The engineering department is located in Block 3.",
         ("contacts", "engineering"): "The head of the engineering department can be reached at eng_head@university.edu.",
+        ("location", "computer science"): "The computer science department is in Block 1, second floor.",
+        ("location", "cs dept"): "The computer science department is in Block 1, second floor.",
+        ("location", "block c"): "Block C is located near the eastern gate, next to the sports field.",
         ("fees", "transcript"): "Transcripts cost 50 Birr per copy. You can pay at the registrar.",
         ("location", "transcript"): "You can pick up your transcript from the main registrar office."
     }
