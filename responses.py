@@ -108,8 +108,8 @@ def get_final_response(prediction, max_prob, entities, sanitized_input):
     context_text, used_context = memory.resolve_context(sanitized_input)
     
     # 2. Threshold Check (Safety Gate)
-    # Increased to 0.65 to reduce False Positives for OOD/Nonsense queries
-    CONFIDENCE_THRESHOLD = 0.65
+    # Increased to 0.70 to better reject Out-of-Domain/Nonsense queries
+    CONFIDENCE_THRESHOLD = 0.70
     if max_prob < CONFIDENCE_THRESHOLD:
         return random.choice(FALLBACK_RESPONSES), True
 
