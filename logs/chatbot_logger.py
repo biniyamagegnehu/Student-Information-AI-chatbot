@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 from datetime import datetime
 
 # --- DIRECTORY SETUP ---
-LOG_DIR = "logs"
+LOG_DIR = os.path.dirname(os.path.abspath(__file__))
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
 
