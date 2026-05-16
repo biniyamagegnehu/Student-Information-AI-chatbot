@@ -1,0 +1,47 @@
+--- HUMAN EVALUATION FAILURE AUDIT [2026-05-16 14:04:12.110886] ---
+Total Misclassifications: 11
+
+INPUT: can i apply online for nursing?
+EXPECTED: admission
+PREDICTED: registration (Conf: 0.30)
+------------------------------
+INPUT: late registration fee?
+EXPECTED: registration
+PREDICTED: fees (Conf: 0.54)
+------------------------------
+INPUT: can i add a course now?
+EXPECTED: registration
+PREDICTED: courses (Conf: 0.51)
+------------------------------
+INPUT: when is my next class?
+EXPECTED: schedule
+PREDICTED: holidays (Conf: 0.43)
+------------------------------
+INPUT: is there class tomorrow?
+EXPECTED: schedule
+PREDICTED: holidays (Conf: 0.71)
+------------------------------
+INPUT: timetable for computer science
+EXPECTED: schedule
+PREDICTED: courses (Conf: 0.63)
+------------------------------
+INPUT: dormitory fee per semester
+EXPECTED: hostel
+PREDICTED: fees (Conf: 0.53)
+------------------------------
+INPUT: laundry services in dorms?
+EXPECTED: hostel
+PREDICTED: contacts (Conf: 0.68)
+------------------------------
+INPUT: registrar office hours
+EXPECTED: contacts
+PREDICTED: location (Conf: 0.74)
+------------------------------
+INPUT: thx for the help
+EXPECTED: thanks
+PREDICTED: greeting (Conf: 0.54)
+------------------------------
+INPUT: take care
+EXPECTED: bye
+PREDICTED: courses (Conf: 0.95)
+------------------------------
