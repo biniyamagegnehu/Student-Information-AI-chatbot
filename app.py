@@ -53,7 +53,9 @@ def predict_intent(user_input):
     # 5. Response Mapping
     response, is_fallback = get_final_response(prediction, max_prob, entities, sanitized_input)
     
-    # 6. Centralized Logging
+    # 6. Centralized Logging (Section F)
+    # Logging includes confidence, intent, and entities for debugging
+    log_msg = f"Intent: {prediction} | Conf: {max_prob:.2f} | Entities: {entities} | Fallback: {is_fallback}"
     ChatbotLogger.log_interaction(user_input, prediction, max_prob, entities, response, is_fallback)
     
     return response, max_prob, prediction, entities, is_fallback
@@ -119,3 +121,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     gui = ChatBotGUI(root)
     root.mainloop()
+

@@ -161,3 +161,4 @@ def extract_all_entities(text):
         entities.append(("STUDENT_ID", id_match.group(0)))
         
     return list(set(entities))
+

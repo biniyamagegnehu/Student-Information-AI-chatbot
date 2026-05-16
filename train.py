@@ -20,7 +20,7 @@ def train_pipeline():
         return
 
     # 1. Load Data
-    print("\n--- 📂 Loading Data ---")
+    print("\n--- [LOG] Loading Data ---")
     df = pd.read_csv(DATASET_FILE)
     
     # 2. Dataset Cleaning (Deduplication)
@@ -29,14 +29,14 @@ def train_pipeline():
     print(f"Cleaned dataset: {len(df)} samples (Removed {initial_len - len(df)} duplicates)")
 
     # 3. Preprocessing
-    print("--- 🧹 Preprocessing Text ---")
+    print("--- [LOG] Preprocessing Text ---")
     df['clean_text'] = df['text'].apply(preprocess_text)
     
     X = df['clean_text']
     y = df['intent']
 
     # 4. Vectorization (TF-IDF)
-    print("--- 🔢 Vectorizing Features ---")
+    print("--- [LOG] Vectorizing Features ---")
     vectorizer = TfidfVectorizer(
         ngram_range=(1, 3), 
         max_df=0.90, 
@@ -52,14 +52,14 @@ def train_pipeline():
 
     # 6. Training with Calibration
     # Logistic Regression + Sigmoid Calibration gives realistic probability scores
-    print("--- 🧠 Training Calibrated Model ---")
+    print("--- [LOG] Training Calibrated Model ---")
     base_clf = LogisticRegression(solver='lbfgs', class_weight='balanced', max_iter=1000)
     model = CalibratedClassifierCV(estimator=base_clf, method='sigmoid', cv=5)
     model.fit(X_train, y_train)
 
     # 7. Evaluation
     score = model.score(X_test, y_test)
-    print(f"✅ Success! Test Accuracy: {score*100:.2f}%")
+    print(f" Success! Test Accuracy: {score*100:.2f}%")
 
     # 8. Save Artifacts
     if not os.path.exists(MODEL_DIR):
@@ -67,7 +67,8 @@ def train_pipeline():
         
     joblib.dump(model, os.path.join(MODEL_DIR, "model.pkl"))
     joblib.dump(vectorizer, os.path.join(MODEL_DIR, "vectorizer.pkl"))
-    print(f"📦 Model files saved to {MODEL_DIR}/")
+    print(f" Model files saved to {MODEL_DIR}/")
 
 if __name__ == "__main__":
     train_pipeline()
+

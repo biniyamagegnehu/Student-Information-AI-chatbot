@@ -95,3 +95,4 @@ class ChatbotLogger:
 
 # Initialize headers on import
 ChatbotLogger.setup()
+

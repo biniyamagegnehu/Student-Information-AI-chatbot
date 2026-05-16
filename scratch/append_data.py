@@ -26,3 +26,4 @@ new_data = [
 df_new = pd.DataFrame(new_data, columns=['text', 'intent'])
 df_new.to_csv('dataset/dataset.csv', mode='a', header=False, index=False)
 print(f"Added {len(new_data)} targeted samples to dataset.csv")
+

@@ -1,1 +1,23 @@
 timestamp,user_input,intent,confidence,entities,response,is_fallback
+2026-05-16T14:32:27.962029,hi,greeting,0.9801,None,Hello! How can I help you with campus information today?,False
+2026-05-16T14:32:59.839769,can yo help me about registration,registration,0.6672,None,I'm not quite sure about that. Could you try rephrasing?,True
+2026-05-16T14:33:22.700841,can you help me about registration,registration,0.7254,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",False
+2026-05-16T14:33:56.296186,yes i am asking you about registration,registration,0.7624,None,I'm still learning! Could you ask that in a different way?,False
+2026-05-16T14:34:58.406539,ok when is the registration,registration,0.6746,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
+2026-05-16T14:35:22.283668,tell me about the exam,exam,0.9095,None,I'm still learning! Could you ask that in a different way?,False
+2026-05-16T14:36:47.049125,tell me in what way that you can help me?,contacts,0.3305,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
+2026-05-16T14:52:50.966930,hello,greeting,0.9757,None,Hi there! I'm your Student Assistant. What's on your mind?,False
+2026-05-16T14:53:11.912590,can you help me about registration ?,registration,0.7739,None,I'm not quite sure about that. Could you try rephrasing?,False
+2026-05-16T15:00:16.952409,can you help me,help,0.6745,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
+2026-05-16T15:00:34.898201,tell me about registration,registration,0.5624,None,I'm not quite sure about that. Could you try rephrasing?,True
+2026-05-16T15:03:23.476623,can you help me ?,help,0.6745,None,"I can help you with Information about:
+- Admissions & Registration
+- Course details & Fees
+- Campus Locations & Contacts
+- Exam Schedules & Results
+
+Just ask me something like 'Where is the library?' or 'When are the exams?'",False
+2026-05-16T15:03:42.639075,tell me about registration,registration,0.5624,None,Registration is done online through the Student Portal. Make sure you clear your fees first!,False
+2026-05-16T15:04:32.063724,thak you,bye,0.1197,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
+2026-05-16T15:04:44.332126,thank you,thanks,0.9752,None,You're very welcome!,False
+2026-05-16T15:05:05.881473,can yo help me ?,greeting,0.6429,None,Hi there! I'm your Student Assistant. What's on your mind?,False

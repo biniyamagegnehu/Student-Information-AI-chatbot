@@ -1,1 +1,21 @@
 2026-05-16 13:32:05,724 - [INFO] - Chatbot Session Started.
+2026-05-16 14:32:13,329 - [INFO] - Chatbot Session Started.
+2026-05-16 14:32:27,965 - [INFO] - Successful Prediction: 'hi' -> greeting (Conf: 0.98)
+2026-05-16 14:32:59,841 - [WARNING] - Fallback Triggered! Input: 'can yo help me about registration' | Confidence: 0.67
+2026-05-16 14:33:22,702 - [INFO] - Successful Prediction: 'can you help me about registration' -> registration (Conf: 0.73)
+2026-05-16 14:33:56,297 - [INFO] - Successful Prediction: 'yes i am asking you about registration' -> registration (Conf: 0.76)
+2026-05-16 14:34:58,408 - [WARNING] - Fallback Triggered! Input: 'ok when is the registration' | Confidence: 0.67
+2026-05-16 14:35:22,285 - [INFO] - Successful Prediction: 'tell me about the exam' -> exam (Conf: 0.91)
+2026-05-16 14:36:47,051 - [WARNING] - Fallback Triggered! Input: 'tell me in what way that you can help me?' | Confidence: 0.33
+2026-05-16 14:52:38,803 - [INFO] - Chatbot Session Started.
+2026-05-16 14:52:50,969 - [INFO] - Successful Prediction: 'hello' -> greeting (Conf: 0.98)
+2026-05-16 14:53:11,914 - [INFO] - Successful Prediction: 'can you help me about registration ?' -> registration (Conf: 0.77)
+2026-05-16 14:59:59,277 - [INFO] - Chatbot Session Started.
+2026-05-16 15:00:16,954 - [WARNING] - Fallback Triggered! Input: 'can you help me' | Confidence: 0.67
+2026-05-16 15:00:34,900 - [WARNING] - Fallback Triggered! Input: 'tell me about registration' | Confidence: 0.56
+2026-05-16 15:03:05,899 - [INFO] - Chatbot Session Started.
+2026-05-16 15:03:23,478 - [INFO] - Successful Prediction: 'can you help me ?' -> help (Conf: 0.67)
+2026-05-16 15:03:42,640 - [INFO] - Successful Prediction: 'tell me about registration' -> registration (Conf: 0.56)
+2026-05-16 15:04:32,065 - [WARNING] - Fallback Triggered! Input: 'thak you' | Confidence: 0.12
+2026-05-16 15:04:44,333 - [INFO] - Successful Prediction: 'thank you' -> thanks (Conf: 0.98)
+2026-05-16 15:05:05,883 - [INFO] - Successful Prediction: 'can yo help me ?' -> greeting (Conf: 0.64)

@@ -20,25 +20,25 @@ FAILURE_LOG = "logs/failures.txt"
 
 def run_evaluation():
     print("\n" + "="*60)
-    print(" 🚀 PROFESSIONAL CHATBOT PERFORMANCE AUDIT (HUMAN DATA)")
+    print("  PROFESSIONAL CHATBOT PERFORMANCE AUDIT (HUMAN DATA)")
     print("="*60)
 
     # 1. Load Assets
     if not os.path.exists(MODEL_PATH) or not os.path.exists(VEC_PATH):
-        print("❌ CRITICAL ERROR: Model files missing. Run train.py first.")
+        print(" CRITICAL ERROR: Model files missing. Run train.py first.")
         return
 
     model = joblib.load(MODEL_PATH)
     vectorizer = joblib.load(VEC_PATH)
-    print("✅ Model Artifacts Loaded.")
+    print(" Model Artifacts Loaded.")
 
     # 2. Load and Prepare Test Data
     if not os.path.exists(HUMAN_TEST_FILE):
-        print(f"❌ ERROR: {HUMAN_TEST_FILE} not found.")
+        print(f" ERROR: {HUMAN_TEST_FILE} not found.")
         return
 
     df = pd.read_csv(HUMAN_TEST_FILE)
-    print(f"✅ Balanced Human Test Set Loaded ({len(df)} samples).")
+    print(f" Balanced Human Test Set Loaded ({len(df)} samples).")
 
     # 3. Clean and Vectorize
     df['clean_text'] = df['text'].apply(preprocess_text)
@@ -60,13 +60,15 @@ def run_evaluation():
     acc = accuracy_score(y_true, y_pred)
     balanced_acc = balanced_accuracy_score(y_true, y_pred)
 
-    print("\n" + "-"*40)
-    print(f"📊 OVERALL ACCURACY: {acc*100:.2f}%")
-    print(f"⚖️ BALANCED ACCURACY: {balanced_acc*100:.2f}% ( fairer metric for small datasets )")
+    print("\n" + "="*40)
+    print(" [ANALYSIS] FAILURE CLUSTER ANALYSIS")
+    print("="*40)
+    print(f"OVERALL ACCURACY: {acc*100:.2f}%")
+    print(f"BALANCED ACCURACY: {balanced_acc*100:.2f}% ( fairer metric for small datasets )")
     print("-"*40)
 
     # 5. Fix Warnings with zero_division
-    print("\n📝 Intent-Level Performance (Precision, Recall, F1):")
+    print("\nIntent-Level Performance (Precision, Recall, F1):")
     # This identifies if any classes are missing in y_true vs y_pred and silences warnings
     unique_labels = sorted(list(set(y_true) | set(y_pred)))
     print(classification_report(y_true, y_pred, labels=unique_labels, zero_division=0))
@@ -83,10 +85,10 @@ def run_evaluation():
         f.write(f"Total Misclassifications: {len(failures)}\n\n")
         f.write("\n".join(failures))
     
-    print(f"✅ Failure analysis saved to {FAILURE_LOG}")
+    print(f" Failure analysis saved to {FAILURE_LOG}")
 
     # 7. Professional OOD (Out-of-Domain) Detection Audit
-    print("\n🚫 Out-of-Domain (OOD) Generalization Audit:")
+    print("\n Out-of-Domain (OOD) Generalization Audit:")
     if not out_of_domain.empty:
         ood_vec = vectorizer.transform(out_of_domain['clean_text'])
         ood_probs = model.predict_proba(ood_vec)
@@ -99,8 +101,8 @@ def run_evaluation():
         false_positives = len(out_of_domain) - properly_ignored
         
         print(f"Tested {len(out_of_domain)} nonsense/unrelated queries.")
-        print(f"✅ Properly Ignored (Low Confidence): {properly_ignored}")
-        print(f"❌ False Positives (High Confidence Guess): {false_positives}")
+        print(f"[OK] Properly Ignored (Low Confidence): {properly_ignored}")
+        print(f"[ERR] False Positives (High Confidence Guess): {false_positives}")
         
         for text, pred, prob in zip(out_of_domain['text'], ood_preds, ood_max_probs):
             if prob >= THRESHOLD:
@@ -117,7 +119,7 @@ def run_evaluation():
     plt.tight_layout()
     
     # 9. Confidence Calibration Audit (New)
-    print("\n📈 Auditing Confidence Calibration...")
+    print("\n Auditing Confidence Calibration...")
     plt.figure(figsize=(10, 6))
     sns.histplot(max_probs, bins=20, kde=True, color='green')
     plt.axvline(x=0.60, color='red', linestyle='--', label='Threshold (0.60)')
@@ -127,7 +129,7 @@ def run_evaluation():
     plt.legend()
     try:
         plt.savefig('logs/confidence_distribution.png')
-        print("✅ Confidence distribution saved as 'logs/confidence_distribution.png'")
+        print(" Confidence distribution saved as 'logs/confidence_distribution.png'")
     except Exception:
         pass
 
@@ -138,14 +140,15 @@ def run_evaluation():
         if any(mask):
             intent_acc[label] = accuracy_score(y_true[mask], y_pred[mask])
     
-    print("\n📍 Per-Intent Recall Audit:")
+    print("\n Per-Intent Recall Audit:")
     for intent, score in sorted(intent_acc.items(), key=lambda x: x[1]):
-        status = "🔴 WEAK" if score < 0.70 else "🟢 STRONG"
+        status = " WEAK" if score < 0.70 else " STRONG"
         print(f"   {intent:15}: {score*100:6.2f}% {status}")
 
     print("\n" + "="*60)
-    print(" ✅ AUDIT COMPLETE: Check logs/ for detailed breakdown.")
+    print("  AUDIT COMPLETE: Check logs/ for detailed breakdown.")
     print("="*60 + "\n")
 
 if __name__ == "__main__":
     run_evaluation()
+

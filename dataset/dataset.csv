@@ -6040,3 +6040,36 @@ hello there campus bot,greeting
 "hi, i need some info about the uni",greeting
 "hey assistant, how are you today?",greeting
 "good day, are you available for questions?",greeting
+what can you do?,help
+how can you help me?,help
+tell me about your features,help
+what kind of questions can i ask?,help
+help me understand how to use this bot,help
+show me available categories,help
+what are your capabilities?,help
+guide me on how to use you,help
+what services do you provide?,help
+can you explain what you do?,help
+i need my weekly class timetable,schedule
+what is the lecture schedule for this month?,schedule
+show me the departmental routine,schedule
+at what time does the morning shift start?,schedule
+is there a specific timetable for freshmen?,schedule
+weekly schedule of software engineering,schedule
+what are the lecture hours for today?,schedule
+i want to see the semester routine,schedule
+when is the lab session occurring?,schedule
+daily class timings for regular students,schedule
+when is the midterm assessment?,exam
+final exam date for engineering,exam
+routine for exams,exam
+test dates for this semester,exam
+when will the finals start?,exam
+help me what can you do,help
+what can you do for me?,help
+can you show me your features,help
+tell me about the chatbot,help
+when is the software engineering exam?,exam
+software engineering final exam date,exam
+what is the date for the pharmacy exam?,exam
+exam schedule for engineering students,exam

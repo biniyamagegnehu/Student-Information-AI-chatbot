@@ -24,14 +24,14 @@ def analyze_failures():
     confusions = Counter(matches)
     
     print("\n" + "="*40)
-    print(" 🔎 FAILURE CLUSTER ANALYSIS")
+    print(" [ANALYSIS] FAILURE CLUSTER ANALYSIS")
     print("="*40)
     
     with open(SUGGESTIONS_FILE, "w", encoding="utf-8") as out:
         out.write("--- AUTOMATED DATASET IMPROVEMENT SUGGESTIONS ---\n\n")
         
         for (expected, predicted), count in confusions.most_common(5):
-            print(f"❌ {expected} is often confused with {predicted} ({count} times)")
+            print(f"[X] {expected} is often confused with {predicted} ({count} times)")
             out.write(f"CONFUSION: {expected} -> {predicted} ({count} cases)\n")
             out.write(f"ACTION: Add more '{expected}' samples containing keywords that distinguish it from '{predicted}'.\n")
             
@@ -43,7 +43,8 @@ def analyze_failures():
             
             out.write("-" * 30 + "\n")
 
-    print(f"\n✅ Analysis complete. Suggestions saved to {SUGGESTIONS_FILE}")
+    print(f"\n Analysis complete. Suggestions saved to {SUGGESTIONS_FILE}")
 
 if __name__ == "__main__":
     analyze_failures()
+
