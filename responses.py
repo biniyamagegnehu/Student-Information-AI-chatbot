@@ -102,12 +102,14 @@ FALLBACK_RESPONSES = [
 def get_final_response(prediction, max_prob, entities, sanitized_input):
     """
     Main logic to determine the best response for the user.
+    Uses a strict confidence threshold for production stability.
     """
     # 1. Resolve Context (e.g., "where is it?")
     context_text, used_context = memory.resolve_context(sanitized_input)
     
-    # 2. Threshold Check
-    CONFIDENCE_THRESHOLD = 0.60
+    # 2. Threshold Check (Safety Gate)
+    # Increased to 0.65 to reduce False Positives for OOD/Nonsense queries
+    CONFIDENCE_THRESHOLD = 0.65
     if max_prob < CONFIDENCE_THRESHOLD:
         return random.choice(FALLBACK_RESPONSES), True
 
@@ -117,15 +119,15 @@ def get_final_response(prediction, max_prob, entities, sanitized_input):
     # 4. Critical Entity Handling (IDs, specific names)
     for label, text in entities:
         if label == "STUDENT_ID":
-            return f"Understood. I've noted Student ID {text}. What do you need to know about this account?", False
+            return f"I've noted Student ID {text}. How can I assist with this account specifically?", False
 
-    # 5. Database Lookup
+    # 5. Database Lookup (Priority over static)
     entity_to_check = memory.last_entity
     if entity_to_check:
         db_info = query_university_db(prediction, entity_to_check)
         if db_info:
             return db_info, False
             
-    # 6. Static Response Fallback
+    # 6. Static Response Fallback (Domain logic)
     response_list = STATIC_RESPONSES.get(prediction, FALLBACK_RESPONSES)
     return random.choice(response_list), False

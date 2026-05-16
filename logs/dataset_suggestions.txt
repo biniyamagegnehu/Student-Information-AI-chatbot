@@ -1,0 +1,17 @@
+--- AUTOMATED DATASET IMPROVEMENT SUGGESTIONS ---
+
+CONFUSION: schedule -> holidays (2 cases)
+ACTION: Add more 'schedule' samples containing keywords that distinguish it from 'holidays'.
+------------------------------
+CONFUSION: admission -> registration (1 cases)
+ACTION: Add more 'admission' samples containing keywords that distinguish it from 'registration'.
+------------------------------
+CONFUSION: registration -> fees (1 cases)
+ACTION: Add more 'registration' samples containing keywords that distinguish it from 'fees'.
+------------------------------
+CONFUSION: registration -> courses (1 cases)
+ACTION: Add more 'registration' samples containing keywords that distinguish it from 'courses'.
+------------------------------
+CONFUSION: schedule -> courses (1 cases)
+ACTION: Add more 'schedule' samples containing keywords that distinguish it from 'courses'.
+------------------------------

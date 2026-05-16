@@ -58,7 +58,9 @@ SHORTHAND_EXPANSIONS = {
 DOMAIN_VOCABULARY = [
     "registration", "semester", "transcript", "library", "registrar", "fee", "tuition",
     "scholarship", "exam", "course", "hostel", "admission", "department", "office", "campus",
-    "block", "dormitory", "schedule", "deadline", "payment", "instructor", "professor"
+    "block", "dormitory", "schedule", "deadline", "payment", "instructor", "professor",
+    "timetable", "routine", "dorm", "cafeteria", "clearance", "enrollment", "transfer",
+    "holiday", "vacation", "ceremony", "grade", "results", "clinic", "stadium"
 ]
 
 lemmatizer = WordNetLemmatizer()

@@ -116,11 +116,32 @@ def run_evaluation():
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
     
+    # 9. Confidence Calibration Audit (New)
+    print("\n📈 Auditing Confidence Calibration...")
+    plt.figure(figsize=(10, 6))
+    sns.histplot(max_probs, bins=20, kde=True, color='green')
+    plt.axvline(x=0.60, color='red', linestyle='--', label='Threshold (0.60)')
+    plt.title('Distribution of Model Confidence Scores (Human Test Data)')
+    plt.xlabel('Max Probability Score')
+    plt.ylabel('Frequency')
+    plt.legend()
     try:
-        plt.savefig('logs/human_eval_matrix_v2.png')
-        print("\n✅ New Confusion Matrix saved as 'logs/human_eval_matrix_v2.png'")
-    except Exception as e:
-        print(f"Plot save failed: {e}")
+        plt.savefig('logs/confidence_distribution.png')
+        print("✅ Confidence distribution saved as 'logs/confidence_distribution.png'")
+    except Exception:
+        pass
+
+    # Per-intent accuracy breakdown
+    intent_acc = {}
+    for label in unique_labels:
+        mask = (y_true == label)
+        if any(mask):
+            intent_acc[label] = accuracy_score(y_true[mask], y_pred[mask])
+    
+    print("\n📍 Per-Intent Recall Audit:")
+    for intent, score in sorted(intent_acc.items(), key=lambda x: x[1]):
+        status = "🔴 WEAK" if score < 0.70 else "🟢 STRONG"
+        print(f"   {intent:15}: {score*100:6.2f}% {status}")
 
     print("\n" + "="*60)
     print(" ✅ AUDIT COMPLETE: Check logs/ for detailed breakdown.")
