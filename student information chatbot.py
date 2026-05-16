@@ -11,6 +11,8 @@ from tkinter import scrolledtext
 from datetime import datetime
 import unicodedata
 
+import chatbot_logger as log
+
 # Visualization and Evaluation Imports
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -159,8 +161,7 @@ class InputValidator:
         
     @staticmethod
     def log_suspicious(text, reason):
-        with open("suspicious_input_log.txt", "a", encoding="utf-8") as f:
-            f.write(f"[{datetime.now()}] [{reason}] {text}\n")
+        log.ChatbotLogger.log_invalid_input(text, reason)
 
 # --- 1. TEXT PREPROCESSING SECTION ---
 lemmatizer = WordNetLemmatizer()
@@ -691,18 +692,12 @@ class ChatbotMemory:
 chat_memory = ChatbotMemory()
 
 # --- 6. PREDICTION & RESPONSE GENERATION ---
-def get_chatbot_response(user_input):
-    if model is None or vectorizer is None:
-        return "Sorry, the AI model failed to load.", 0.0
-        
-    # --- 0. INPUT VALIDATION & SANITIZATION ---
-    is_valid, sanitized_input, error_msg = InputValidator.validate_and_sanitize(user_input)
-    if not is_valid:
-        return error_msg, 0.0
-        
+def _generate_raw_response(user_input, sanitized_input):
+    """
+    Internal logic for predicting the intent and extracting entities.
+    Returns: (response: str, max_prob: float, prediction: str, extracted_entities: list, is_fallback: bool)
+    """
     # --- A. CONTEXT RESOLUTION ---
-    # Try to resolve pronouns like "it" or "there" using the short-term memory
-    # We do this BEFORE heavy NLP preprocessing so we can detect standard English pronouns.
     context_aware_input, used_context = chat_memory.resolve_context(sanitized_input.lower())
     
     # --- B. NER EXTRACTION ---
@@ -713,13 +708,12 @@ def get_chatbot_response(user_input):
     
     # --- 1. NONSENSE / EMPTY INPUT HANDLING ---
     if not clean_input:
-        log_low_confidence_query(user_input, 0.0, "NONSENSE")
         fallback_nonsense = [
             "I didn't quite catch any standard words there. Could you rephrase?",
             "I only understand standard English phrases. Can you try typing that again?",
             "Sorry, that doesn't look like a question about university services."
         ]
-        return random.choice(fallback_nonsense), 0.0
+        return random.choice(fallback_nonsense), 0.0, "unknown", [], True
         
     # Vectorize and Predict
     user_vec = vectorizer.transform([clean_input])
@@ -727,60 +721,40 @@ def get_chatbot_response(user_input):
     max_prob = max(probabilities)
     prediction = model.classes_[probabilities.argmax()]
     
-    # --- 2. PROFESSIONAL CONFIDENCE THRESHOLD LOGIC ---
-    # Why this matters: Logistic Regression with TF-IDF will ALWAYS pick a class, even if the input is "i love football".
-    # By setting a threshold, we force the bot to admit ignorance instead of lying or providing irrelevant info.
-    # 
-    # Tuning Guide for Calibrated Models:
-    # - Too low (e.g., 0.30): Bot might still guess randomly.
-    # - Too high (e.g., 0.85): Bot refuses perfectly valid, but slightly uniquely phrased questions.
-    # - Balanced (0.60 - 0.70): The optimal sweet spot for calibrated probabilities.
     CONFIDENCE_THRESHOLD = 0.60 
     
     if max_prob < CONFIDENCE_THRESHOLD:
-        log_low_confidence_query(user_input, max_prob, prediction) # Log the failure so developers can add it to the dataset!
-        
-        # --- 3. MULTIPLE FALLBACK RESPONSES ---
-        # Randomizing fallbacks makes the bot feel much more natural and human-like
         fallback_responses = [
             "I'm not entirely sure about that. Could you rephrase your question?",
             "I don't have enough confidence to answer that accurately. Are you asking about courses, fees, or something else?",
             "I'm still learning! Could you ask that in a slightly different way?",
             "I didn't quite get that. I specialize in university registration, schedules, locations, and admissions."
         ]
-        
-        # If context was used but it still failed, the memory might be stale or wrong. Clear it.
         if used_context:
             chat_memory.clear_memory()
             
-        return random.choice(fallback_responses), max_prob
+        return random.choice(fallback_responses), max_prob, prediction, extracted_entities, True
         
     # --- B. MEMORY UPDATE ---
-    # If the bot successfully understood the question, update the short-term memory with the new context!
     chat_memory.update_memory(context_aware_input, prediction, extracted_entities)
     
     # --- C. DYNAMIC DATABASE RETRIEVAL & RESPONSE GENERATION ---
-    
-    # 1. First priority: Handle critical extracted entities independently of ML intent!
     for label, text_val in extracted_entities:
         if label == "STUDENT_ID":
-            return f"I have noted your Student ID: {text_val}. What specific account information do you need?", max_prob
+            return f"I have noted your Student ID: {text_val}. What specific account information do you need?", max_prob, prediction, extracted_entities, False
         if label == "INSTRUCTOR":
-            # Dynamically fetch instructor info from the database
             contact_info = db.get_contact(text_val)
             if contact_info:
-                return contact_info, max_prob
-            return f"{text_val.title()}'s office is located in the main Faculty Building, Room 204.", max_prob
+                return contact_info, max_prob, prediction, extracted_entities, False
+            return f"{text_val.title()}'s office is located in the main Faculty Building, Room 204.", max_prob, prediction, extracted_entities, False
         if label == "SEMESTER":
             if prediction in ["results", "transcript", "courses"]:
-                return f"Your transcript and grades for {text_val} will be updated on the SIS portal shortly.", max_prob
+                return f"Your transcript and grades for {text_val} will be updated on the SIS portal shortly.", max_prob, prediction, extracted_entities, False
                 
-    # 2. Second priority: Dynamic Intent + Entity combination via SQLite Database
     entity = chat_memory.last_entity
     
     if entity:
         db_res = None
-        # Route the query to the correct database table based on the NLP intent
         if prediction == "location":
             db_res = db.get_location(entity)
         elif prediction == "fees":
@@ -791,23 +765,48 @@ def get_chatbot_response(user_input):
             db_res = db.get_schedule(entity)
             
         if db_res:
-            return db_res, max_prob
+            return db_res, max_prob, prediction, extracted_entities, False
             
-    # 3. Third priority: Check general info table for specific topics
     if entity:
         general_res = db.get_general_info(entity)
         if general_res: 
-            return general_res, max_prob
+            return general_res, max_prob, prediction, extracted_entities, False
         
-    # Check if any raw word matches a general DB topic (e.g., "hostel availability")
     for word in context_aware_input.split():
         general_res = db.get_general_info(word)
         if general_res: 
-            return general_res, max_prob
+            return general_res, max_prob, prediction, extracted_entities, False
         
-    # --- 4. SUCCESSFUL GENERIC RESPONSE (FALLBACK) ---
-    # If the database lacked the specific entity info, we gracefully fallback to the static responses.
-    return random.choice(responses.get(prediction, ["Sorry, I don't have detailed information on that."])), max_prob
+    return random.choice(responses.get(prediction, ["Sorry, I don't have detailed information on that."])), max_prob, prediction, extracted_entities, False
+
+
+def get_chatbot_response(user_input):
+    """
+    Main entry point for chatbot interactions. Handles validation, processing, and centralized logging.
+    """
+    if model is None or vectorizer is None:
+        return "Sorry, the AI model failed to load.", 0.0
+        
+    # --- 0. INPUT VALIDATION & SANITIZATION ---
+    is_valid, sanitized_input, error_msg = InputValidator.validate_and_sanitize(user_input)
+    if not is_valid:
+        # We already log invalid input via InputValidator directly
+        return error_msg, 0.0
+        
+    # --- 1. GENERATE RAW RESPONSE ---
+    response, max_prob, prediction, extracted_entities, is_fallback = _generate_raw_response(user_input, sanitized_input)
+    
+    # --- 2. PROFESSIONALLY LOG THE INTERACTION ---
+    log.ChatbotLogger.log_interaction(
+        user_input=user_input,
+        intent=prediction,
+        confidence=max_prob,
+        entities=extracted_entities,
+        response=response,
+        is_fallback=is_fallback
+    )
+    
+    return response, max_prob
 
 # --- 7. MODERN GUI SECTION ---
 class ChatBotGUI:
