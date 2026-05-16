@@ -120,15 +120,21 @@ def log_low_confidence_query(user_input, max_prob, predicted_intent="UNKNOWN"):
 # --- 3. MODEL EVALUATION & TESTING SECTION ---
 def test_sample_queries(model, vectorizer, model_name="Model"):
     """
-    Tests the model with manual, realistic student queries to evaluate predictions.
+    Tests the model with hard, realistic, and unseen student queries to evaluate REAL generalization.
     """
-    print(f"\n--- 🧪 MANUAL SAMPLE QUERY TESTING ({model_name}) ---")
+    print(f"\n--- 🧪 REALISTIC & ADVERSARIAL QUERY TESTING ({model_name}) ---")
+    # HARD UNSEEN & ADVERSARIAL QUERIES
+    # These queries test if the bot actually generalized the concepts, or if it just 
+    # memorized the training data's exact phrasing.
     test_queries = [
-        "when is the deadline to pay my tuition?",
-        "where is the computer lab located?",
-        "I need my transcript for graduation",
-        "how do i apply for a scholarship?",
-        "asdfghjkl", # Nonsense query to test fallback
+        "yo where's the cs office",                   # Slang & unconventional phrasing
+        "i missed registration what now",             # Complex, multi-part intent context
+        "fee payment still open?",                    # Extremely short, conversational
+        "i cant find engineering block",              # Problem-oriented phrasing
+        "transcript needed urgently for internship",  # Extra context added to generic intent
+        "when's the makeup exam",                     # Edge-case scenario
+        "dorm rooms available for transfer students", # Very specific situation
+        "asdfghjkl",                                  # Adversarial: Pure nonsense
     ]
     
     for query in test_queries:
@@ -160,15 +166,49 @@ def train_and_evaluate_model():
         print("Error: dataset.csv not found! Please create it first.")
         return None, None
         
-    print("Preprocessing text data...")
+    # --- 1. DATASET AUDIT & LEAKAGE DETECTION ---
+    # EXPLANATION OF DATASET LEAKAGE & ARTIFICIAL ACCURACY INFLATION:
+    # "Dataset Leakage" occurs when testing data contains samples that are identical 
+    # (or semantically identical) to the training data. Generated datasets often have this issue.
+    # If a bot trains on "where is the library" and is tested on the exact same phrase, 
+    # it scores 100% via MEMORIZATION, not real learning. This leads to artificially inflated 
+    # accuracy (e.g. 99%) that completely collapses in real-world production.
+    
+    print("\n--- 🕵️ DATASET QUALITY AUDIT ---")
+    initial_count = len(data)
+    
+    # Detect exact duplicate rows
+    duplicates = data.duplicated(subset=['text']).sum()
+    if duplicates > 0:
+        print(f"⚠️ Warning: Found {duplicates} exact duplicate queries in dataset!")
+        print("-> Removing duplicates to prevent memorization and accuracy inflation...")
+        data = data.drop_duplicates(subset=['text'])
+        
+    print(f"Dataset Size after deduplication: {len(data)} (Original: {initial_count})")
+    
+    # HOW TO DETECT SEMANTIC DUPLICATES (NEAR-DUPLICATES):
+    # Even after exact deduplication, generated data might have:
+    # 1. "where is the main library"
+    # 2. "where is the campus library"
+    # To detect this, you can compute pairwise cosine similarities of TF-IDF vectors 
+    # before splitting. If similarity > 0.95, drop one. 
+    # Best practice for reducing overfitting: Keep training datasets heavily diverse, 
+    # combining short, long, formal, and typo-ridden phrases.
+        
+    print("\nPreprocessing text data...")
     data['clean_text'] = data['text'].apply(preprocess_text)
     
     X = data['clean_text']
     y = data['intent']
     
-    # 1. Train/Test Split (Train only on training data)
-    print("Splitting data into train and test sets (80/20)...")
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # --- 2. STRATIFIED TRAIN/TEST SPLITTING ---
+    # WHY WE USE STRATIFIED SPLITTING (StratifiedShuffleSplit approach):
+    # Random splitting might accidentally put all examples of a rare intent (e.g. 'holidays') 
+    # into the training set, leaving none for the test set (or vice versa).
+    # Stratified splitting ensures every intent class maintains its exact original ratio 
+    # in both the training and testing sets, providing an honest evaluation.
+    print("Splitting data using Stratified Splitting (80/20)...")
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
     
     # 2. Optimized TF-IDF Vectorization
     # - ngram_range=(1, 3): Captures single words, pairs, and triplets (e.g. "computer science department")
@@ -269,6 +309,7 @@ def train_and_evaluate_model():
     print(f"Accuracy Score: {accuracy * 100:.2f}%\n")
     
     # 3. Cross-Validation: Evaluates model performance across 5 different subsets of the data
+    # cross_val_score uses StratifiedKFold by default for classification tasks.
     # This proves the model is genuinely robust and not just lucky with the initial split.
     print("Running 5-Fold Cross Validation on CALIBRATED Model...")
     # Using a pipeline ensures no data leakage during cross-validation
