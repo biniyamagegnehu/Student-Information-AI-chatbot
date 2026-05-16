@@ -22,6 +22,14 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 from sklearn.pipeline import make_pipeline
 from sklearn.calibration import CalibratedClassifierCV
 
+# Fuzzy String Matching for Typo Correction
+try:
+    from rapidfuzz import process, fuzz
+    HAS_RAPIDFUZZ = True
+except ImportError:
+    import difflib
+    HAS_RAPIDFUZZ = False
+
 # NLTK imports
 import nltk
 from nltk.corpus import stopwords
@@ -45,14 +53,20 @@ stop_words = set(stopwords.words('english'))
 important_words_to_keep = {'where', 'when', 'how', 'what', 'who', 'which', 'why', 'can', 'do', 'is', 'are', 'i', 'my'}
 stop_words = stop_words - important_words_to_keep
 
-# Dictionary for common typo corrections and abbreviations
-TYPO_CORRECTIONS = {
-    "regstration": "registration",
-    "registeration": "registration",
-    "scheduel": "schedule",
-    "scedule": "schedule",
-    "librery": "library",
-    "wher": "where",
+# --- DOMAIN-SPECIFIC VOCABULARY & TYPO HANDLING ---
+# A curated list of critical university terms used for fuzzy spell correction.
+# We do NOT use generic English dictionaries (like TextBlob) because they often falsely 
+# "correct" campus-specific acronyms or domain words.
+DOMAIN_VOCABULARY = [
+    "registration", "schedule", "library", "where", "please", "information", 
+    "administration", "department", "computer", "science", "technology", 
+    "laboratory", "dormitory", "registrar", "deadline", "tuition", "fee", 
+    "payment", "transcript", "internship", "hostel", "availability", 
+    "admission", "requirements", "exam", "courses", "scholarship", "campus"
+]
+
+# Explicit Shorthand & Abbreviation Expansions
+SHORTHAND_EXPANSIONS = {
     "pls": "please",
     "plz": "please",
     "info": "information",
@@ -62,8 +76,49 @@ TYPO_CORRECTIONS = {
     "it": "information technology",
     "lab": "laboratory",
     "dorm": "dormitory",
-    "registar": "registrar"
+    "registar": "registrar", 
+    "uni": "university",
+    "asap": "urgently",
+    "wher": "where"
 }
+
+def apply_typo_correction(word):
+    """
+    Applies explicit shorthand expansion and confidence-aware fuzzy spell correction.
+    """
+    # 1. First, check explicit shorthand/abbreviation expansions
+    if word in SHORTHAND_EXPANSIONS:
+        # Some shorthands expand to multiple words (e.g. "cs" -> "computer science")
+        # We handle this splitting logic downstream, but for now just return the expansion string.
+        # Actually, it's safer to return the string and let the vectorizer handle the space.
+        return SHORTHAND_EXPANSIONS[word]
+        
+    # 2. Skip correction for very short words, numbers, or stop words to prevent false positives (ambiguous corrections)
+    if len(word) <= 3 or word in stop_words:
+        return word
+        
+    # 3. Fuzzy Matching (Spell Correction against Domain Vocabulary)
+    # Using rapidfuzz if available (lightning fast, C++ backend) else fallback to difflib
+    # The 'score_cutoff' / 'cutoff' parameter acts as a confidence threshold. 
+    # E.g., 80% similarity required. This protects against incorrect auto-corrections.
+    if HAS_RAPIDFUZZ:
+        match = process.extractOne(word, DOMAIN_VOCABULARY, scorer=fuzz.ratio, score_cutoff=80)
+        if match:
+            corrected_word = match[0]
+            if corrected_word != word:
+                with open("typo_corrections_log.txt", "a", encoding="utf-8") as f:
+                    f.write(f"[{datetime.now()}] RapidFuzz Corrected: '{word}' -> '{corrected_word}'\n")
+            return corrected_word
+    else:
+        matches = difflib.get_close_matches(word, DOMAIN_VOCABULARY, n=1, cutoff=0.8)
+        if matches:
+            corrected_word = matches[0]
+            if corrected_word != word:
+                with open("typo_corrections_log.txt", "a", encoding="utf-8") as f:
+                    f.write(f"[{datetime.now()}] Difflib Corrected: '{word}' -> '{corrected_word}'\n")
+            return corrected_word
+            
+    return word
 
 def preprocess_text(text):
     """
@@ -92,14 +147,16 @@ def preprocess_text(text):
     
     clean_words = []
     for word in words:
-        # 6. Typo & Abbreviation handling
-        word = TYPO_CORRECTIONS.get(word, word)
+        # 6. Apply intelligent typo correction and shorthand expansion
+        corrected_phrase = apply_typo_correction(word)
         
-        # 7. Stopword removal (excluding important question words)
-        if word not in stop_words:
-            # 8. Lemmatization: Reduces words to their base dictionary form (e.g., 'courses' -> 'course')
-            lemma = lemmatizer.lemmatize(word)
-            clean_words.append(lemma)
+        # If shorthand expanded to multiple words (e.g. "computer science"), process them
+        for corrected_word in corrected_phrase.split():
+            # 7. Stopword removal (excluding important question words)
+            if corrected_word not in stop_words:
+                # 8. Lemmatization: Reduces words to their base dictionary form
+                lemma = lemmatizer.lemmatize(corrected_word)
+                clean_words.append(lemma)
             
     # 9. Rejoin into a single normalized string
     return ' '.join(clean_words)
@@ -127,13 +184,14 @@ def test_sample_queries(model, vectorizer, model_name="Model"):
     # These queries test if the bot actually generalized the concepts, or if it just 
     # memorized the training data's exact phrasing.
     test_queries = [
-        "yo where's the cs office",                   # Slang & unconventional phrasing
-        "i missed registration what now",             # Complex, multi-part intent context
-        "fee payment still open?",                    # Extremely short, conversational
-        "i cant find engineering block",              # Problem-oriented phrasing
-        "transcript needed urgently for internship",  # Extra context added to generic intent
-        "when's the makeup exam",                     # Edge-case scenario
-        "dorm rooms available for transfer students", # Very specific situation
+        "regstration deadline",                       # Common missing vowel
+        "exam scheduel pls",                          # Transposed letters + abbreviation
+        "wher is librery",                            # Multiple typos in one query
+        "fee payment when???",                        # Punctuation spam + short structure
+        "cs dept location",                           # Multiple shorthand terms
+        "transcript urgently needed",                 # Proper word, out of order structure
+        "hostel avalability",                         # Missing letter
+        "admisson requirements",                      # Missing letter
         "asdfghjkl",                                  # Adversarial: Pure nonsense
     ]
     
