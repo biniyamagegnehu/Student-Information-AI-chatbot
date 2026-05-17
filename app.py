@@ -205,49 +205,66 @@ class ChatbotEngine:
         fallback_reason = None
 
         # --- STEP 1.5: HYBRID INTENT RESOLUTION (HEURISTIC ENGINE OVERRIDE) ---
+        # Uses both Phase 7 uppercase keys (DEPARTMENT, OFFICE, BUILDING) and
+        # lowercase legacy keys for full backward compatibility.
         raw_lower = raw_text_clean.lower()
         heuristics_matched = False
 
         if extracted_entities:
-            # A. Spatial locations check
+            # A. Spatial locations check — expanded to include BUILDING (Phase 7)
             if any(w in raw_lower for w in ["where", "location", "block", "room", "office", "find", "map", "address", "building", "floor"]):
-                if any(k in extracted_entities for k in ["department", "office", "student_services"]):
+                if any(k in extracted_entities for k in ["DEPARTMENT", "OFFICE", "BUILDING", "LOCATION",
+                                                          "department", "office", "student_services"]):
                     intent = "location"
                     confidence = 1.0
                     heuristics_matched = True
-            
-            # B. Fees check
+
+            # B. Fees check — accept DEPARTMENT *or* SERVICE:fees entity
             elif any(w in raw_lower for w in ["how much", "cost", "price", "tuition", "fee", "fees", "pay", "payment"]):
-                if "department" in extracted_entities:
+                if any(k in extracted_entities for k in ["DEPARTMENT", "department"]) or extracted_entities.get("SERVICE") == "fees" or extracted_entities.get("service") == "fees":
                     intent = "fees"
                     confidence = 1.0
                     heuristics_matched = True
 
             # C. Exams check
             elif any(w in raw_lower for w in ["exam", "exams", "examination", "test", "schedule", "timetable", "routine", "midterm", "final"]):
-                if "department" in extracted_entities:
+                if any(k in extracted_entities for k in ["DEPARTMENT", "department"]):
                     intent = "exam"
                     confidence = 1.0
                     heuristics_matched = True
 
             # D. Contacts check
             elif any(w in raw_lower for w in ["contact", "reach", "email", "phone", "call", "write", "number"]):
-                if any(k in extracted_entities for k in ["department", "office"]):
+                if any(k in extracted_entities for k in ["DEPARTMENT", "OFFICE", "department", "office"]):
                     intent = "contacts"
                     confidence = 1.0
                     heuristics_matched = True
 
             # E. Scholarships check
             elif any(w in raw_lower for w in ["scholarship", "scholarships", "coverage", "waiver", "aid"]):
-                if "scholarship" in extracted_entities:
+                if any(k in extracted_entities for k in ["SERVICE", "scholarship"]):
                     intent = "scholarship"
                     confidence = 1.0
                     heuristics_matched = True
 
-            # F. Student Services check
+            # F. Student Services / Library check
             elif any(w in raw_lower for w in ["service", "services", "counseling", "career", "library"]):
-                if "student_services" in extracted_entities:
+                if any(k in extracted_entities for k in ["BUILDING", "SERVICE", "student_services"]):
                     intent = "student_services"
+                    confidence = 1.0
+                    heuristics_matched = True
+
+            # G. Registration check — SERVICE:registration entity present (no department required)
+            elif any(w in raw_lower for w in ["register", "registration", "enroll", "enrollment", "deadline"]):
+                if extracted_entities.get("SERVICE") == "registration" or extracted_entities.get("service") == "registration":
+                    intent = "registration"
+                    confidence = 1.0
+                    heuristics_matched = True
+
+            # H. Courses check — SERVICE:registration present with course keywords
+            elif any(w in raw_lower for w in ["course", "courses", "subject", "program", "class", "module"]):
+                if any(k in extracted_entities for k in ["DEPARTMENT", "department", "SERVICE"]):
+                    intent = "courses"
                     confidence = 1.0
                     heuristics_matched = True
 
@@ -285,21 +302,25 @@ class ChatbotEngine:
                     confidence = float(probabilities[max_index])
                     predicted_intent = self.label_encoder.inverse_transform([max_index])[0]
                     
-                    # Confidence Guardrail
+                    # Confidence Guardrail — uses Phase 7 uppercase keys + legacy lowercase keys
                     effective_threshold = config.CONFIDENCE_THRESHOLD
                     if extracted_entities:
                         # Lower the required threshold if we have extracted a matching domain entity
-                        if predicted_intent == "location" and any(k in extracted_entities for k in ["department", "office", "student_services"]):
+                        if predicted_intent == "location" and any(k in extracted_entities for k in [
+                                "DEPARTMENT", "OFFICE", "BUILDING", "LOCATION",
+                                "department", "office", "student_services"]):
                             effective_threshold = 0.25
-                        elif predicted_intent == "fees" and "department" in extracted_entities:
+                        elif predicted_intent == "fees" and any(k in extracted_entities for k in ["DEPARTMENT", "department"]):
                             effective_threshold = 0.25
-                        elif predicted_intent == "exam" and "department" in extracted_entities:
+                        elif predicted_intent == "exam" and any(k in extracted_entities for k in ["DEPARTMENT", "department"]):
                             effective_threshold = 0.25
-                        elif predicted_intent == "contacts" and any(k in extracted_entities for k in ["department", "office"]):
+                        elif predicted_intent == "contacts" and any(k in extracted_entities for k in [
+                                "DEPARTMENT", "OFFICE", "department", "office"]):
                             effective_threshold = 0.25
-                        elif predicted_intent == "scholarship" and "scholarship" in extracted_entities:
+                        elif predicted_intent == "scholarship" and any(k in extracted_entities for k in ["SERVICE", "scholarship"]):
                             effective_threshold = 0.25
-                        elif predicted_intent == "student_services" and "student_services" in extracted_entities:
+                        elif predicted_intent == "student_services" and any(k in extracted_entities for k in [
+                                "BUILDING", "SERVICE", "student_services"]):
                             effective_threshold = 0.25
 
                     if confidence < effective_threshold:

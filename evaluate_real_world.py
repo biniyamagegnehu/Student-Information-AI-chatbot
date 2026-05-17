@@ -105,7 +105,7 @@ def run_evaluation():
         ood_preds = label_encoder.inverse_transform(ood_pred_indices)
         
         # A good model should have LOW confidence for nonsense
-        THRESHOLD = 0.60
+        THRESHOLD = config.CONFIDENCE_THRESHOLD
         properly_ignored = sum(p < THRESHOLD for p in ood_max_probs)
         false_positives = len(out_of_domain) - properly_ignored
         
@@ -131,7 +131,7 @@ def run_evaluation():
     print("\n Auditing Confidence Calibration...")
     plt.figure(figsize=(10, 6))
     sns.histplot(max_probs, bins=20, kde=True, color='green')
-    plt.axvline(x=0.60, color='red', linestyle='--', label='Threshold (0.60)')
+    plt.axvline(x=config.CONFIDENCE_THRESHOLD, color='red', linestyle='--', label=f'Threshold ({config.CONFIDENCE_THRESHOLD})')
     plt.title('Distribution of Model Confidence Scores (Human Test Data)')
     plt.xlabel('Max Probability Score')
     plt.ylabel('Frequency')
