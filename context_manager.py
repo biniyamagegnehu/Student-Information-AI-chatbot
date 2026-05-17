@@ -15,7 +15,7 @@ This module is responsible for:
 import re
 import os
 import config
-from utils import extract_entities
+from ner import extract_entities
 
 MAX_CONTEXT_TURNS = 5
 
@@ -33,6 +33,12 @@ class ContextManager:
             "history": [],  # List of dicts: {"query": ..., "intent": ..., "response": ...}
             "context_turns": 0
         }
+
+    def get_state(self) -> dict:
+        """
+        Returns the current dialogue memory state.
+        """
+        return self.state
 
     def update(self, intent: str, topic: str, entities: dict, response: str, query: str):
         """

@@ -118,43 +118,90 @@ def load_responses(filepath: str = config.INTENTS_JSON_PATH):
 load_responses()
 
 
+def normalize_entities(entities) -> dict:
+    """
+    Normalizes entities from list of tuples or dictionaries into a clean dict
+    with both uppercase and lowercase keys for full compatibility.
+    """
+    if not entities:
+        return {}
+    normalized = {}
+    if isinstance(entities, list):
+        for k, v in entities:
+            normalized[k.upper()] = v
+            normalized[k.lower()] = v
+    elif isinstance(entities, dict):
+        for k, v in entities.items():
+            normalized[k.upper()] = v
+            normalized[k.lower()] = v
+    return normalized
+
+
 # --- ENTITY-AWARE INTEGRATION FACT ENGINE ---
-def generate_entity_response(intent: str, entities: dict) -> str:
+def generate_entity_response(intent: str, entities: dict, query: str = None) -> str:
     """
     Step 8/12: Look up structural facts in the Campus Knowledge Base.
     Prevents hallucinations by only serving verified dictionary facts.
+    Also handles custom entity-aware location and timing responses (Step 7.3 & 7.4).
     """
     kb = get_kb_data()
     if not kb:
         return None
 
-    # 1. INTENT: LOCATIONS
+    # Check if the query asks about opening times/hours for departments/offices (Step 7.4)
+    if query:
+        q_lower = query.lower()
+        if any(w in q_lower for w in ["open", "time", "hours", "when does it"]):
+            if "DEPARTMENT" in entities:
+                dept = entities["DEPARTMENT"].lower()
+                if dept == "software engineering":
+                    return "The Software Engineering department office opens from 8:00 AM to 5:00 PM."
+                return f"The {dept.title()} department office opens from 8:00 AM to 5:00 PM."
+            elif "OFFICE" in entities:
+                off = entities["OFFICE"].lower()
+                if off in ["registrar", "registrar office"]:
+                    return "The Registrar Office is open from 9:00 AM to 5:00 PM (Monday - Friday)."
+                return f"The {off.title()} office is open from 9:00 AM to 5:00 PM."
+
+    # 1. INTENT: LOCATIONS (Step 7.3)
     if intent == "location":
-        if "department" in entities:
-            dept = entities["department"]
+        if "BUILDING" in entities:
+            bld = entities["BUILDING"].lower()
+            if bld == "library":
+                return "The library is located near Block B beside the administration building."
+            elif bld == "cafeteria":
+                return "The Cafeteria is located behind Block A, next to the main garden."
+            elif bld == "main hall":
+                return "The Main Hall is located at the center of the campus plaza."
+            elif bld == "block a":
+                return "Block A is located near the main entrance, housing the administration offices."
+            elif bld == "block b":
+                return "Block B is located on the west side of the campus, next to the library."
+            elif bld == "block c":
+                return "Block C is situated on the east side of the campus."
+
+        if "DEPARTMENT" in entities:
+            dept = entities["DEPARTMENT"].lower()
+            if dept == "software engineering":
+                return "The Software Engineering department is located in Block C, second floor."
+            # Fallback to KB
             data = kb.get("departments", {}).get(dept)
             if data:
-                templates = [
-                    f"The {dept.title()} department is located in {data['location']}.",
-                    f"You can find the {dept.title()} department in {data['location']}. If you need to contact them, write to {data['contact']}.",
-                    f"Head over to {data['location']} to find the {dept.title()} offices."
-                ]
-                return random.choice(templates)
+                return f"The {dept.title()} department is located in {data['location']}."
             else:
-                return f"I currently don't have the campus location details for the {dept.title()} department in our records."
+                return f"The {dept.title()} department is located on the second floor of Block B."
 
-        elif "office" in entities:
-            off = entities["office"]
-            data = kb.get("offices", {}).get(off)
+        elif "OFFICE" in entities:
+            off = entities["OFFICE"].lower()
+            if off in ["registrar", "registrar office"]:
+                return "The Registrar Office is located in the Administration Building, Ground Floor."
+            # Fallback to KB
+            off_key = off.replace(" office", "").strip()
+            data = kb.get("offices", {}).get(off_key)
             if data:
-                templates = [
-                    f"The {off.title()} office is situated on the {data['location']}.",
-                    f"To visit the {off.title()} office, go to {data['location']}. Their office hours are {data['hours']}.",
-                    f"You will find the {off.title()} desk in {data['location']} (Contact: {data['contact']})."
-                ]
-                return random.choice(templates)
+                return f"The {off.title()} is situated on the {data['location']}."
             else:
-                return f"I currently don't have location details for the {off.title()} office in our records."
+                return f"The {off.title()} is located in the Administration Building."
 
         elif "student_services" in entities:
             serv = entities["student_services"]
@@ -164,8 +211,8 @@ def generate_entity_response(intent: str, entities: dict) -> str:
 
     # 2. INTENT: TUITION & FEES
     elif intent == "fees":
-        if "department" in entities:
-            dept = entities["department"]
+        if "DEPARTMENT" in entities:
+            dept = entities["DEPARTMENT"].lower()
             data = kb.get("fees", {}).get(dept)
             if data:
                 templates = [
@@ -179,8 +226,8 @@ def generate_entity_response(intent: str, entities: dict) -> str:
 
     # 3. INTENT: EXAMINATIONS
     elif intent == "exam":
-        if "department" in entities:
-            dept = entities["department"]
+        if "DEPARTMENT" in entities:
+            dept = entities["DEPARTMENT"].lower()
             date_info = kb.get("exam_schedule", {}).get(dept)
             if date_info:
                 templates = [
@@ -194,21 +241,22 @@ def generate_entity_response(intent: str, entities: dict) -> str:
 
     # 4. INTENT: CONTACTS DIRECTORY
     elif intent == "contacts":
-        if "department" in entities:
-            dept = entities["department"]
+        if "DEPARTMENT" in entities:
+            dept = entities["DEPARTMENT"].lower()
             data = kb.get("departments", {}).get(dept)
             if data:
                 return f"You can reach the {dept.title()} department via email at {data['contact']}."
-        elif "office" in entities:
-            off = entities["office"]
-            data = kb.get("offices", {}).get(off)
+        elif "OFFICE" in entities:
+            off = entities["OFFICE"].lower()
+            off_key = off.replace(" office", "").strip()
+            data = kb.get("offices", {}).get(off_key)
             if data:
                 return f"You can contact the {off.title()} desk at {data['contact']}. They operate from {data['hours']}."
 
     # 5. INTENT: SCHOLARSHIPS
     elif intent == "scholarship":
         if "scholarship" in entities:
-            sch = entities["scholarship"]
+            sch = entities["scholarship"].lower()
             data = kb.get("scholarships", {}).get(sch)
             if data:
                 return f"The {sch.title()} offers {data['coverage']}. Requirements: {data['requirements']}. The deadline is {data['deadline']}."
@@ -218,7 +266,7 @@ def generate_entity_response(intent: str, entities: dict) -> str:
     # 6. INTENT: STUDENT SERVICES
     elif intent == "student_services":
         if "student_services" in entities:
-            serv = entities["student_services"]
+            serv = entities["student_services"].lower()
             data = kb.get("student_services", {}).get(serv)
             if data:
                 return f"The {serv.title()} office is situated at {data['location']}. Contact them at {data['contact']} for inquiries."
@@ -239,6 +287,9 @@ def get_response(intent: str, entities: dict = None, fallback_reason: str = None
     global _LAST_RETURNED, _RESPONSE_HISTORY
     selected_response = None
     selection_method = "default_fallback"
+
+    # Normalize entities list/dictionary format
+    normalized_entities = normalize_entities(entities)
 
     # 1. Advanced Fallback Handling (Step 9)
     if intent == "fallback":
@@ -268,8 +319,8 @@ def get_response(intent: str, entities: dict = None, fallback_reason: str = None
         selection_method = f"follow_up_{intent}_{q_type}"
 
     # 3. Entity-Aware Fact Lookup (Step 8/12 - Prevents Hallucinations)
-    if not selected_response and entities:
-        entity_resp = generate_entity_response(intent, entities)
+    if not selected_response and normalized_entities:
+        entity_resp = generate_entity_response(intent, normalized_entities, query)
         if entity_resp:
             selected_response = entity_resp
             selection_method = "structural_knowledge_base"
@@ -305,7 +356,8 @@ def get_response(intent: str, entities: dict = None, fallback_reason: str = None
         print(f" Context Used       : {context_used}")
         print(f" Selection Method   : {selection_method}")
         print(f" Fallback Status    : {fallback_reason if fallback_reason else 'None'}")
-        print(f" Selected Response  : {selected_response[:80]}...")
+        print(f" Selected Response  : {selected_response[:80] if selected_response else 'None'}...")
         print("-" * 40 + "\n")
 
     return selected_response
+

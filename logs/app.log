@@ -26,3 +26,8 @@
 2026-05-17 16:26:22,443 - [INFO] - Query: 'what about computer science?' | Intent: 'exam' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: exam | FallbackReason: None
 2026-05-17 16:26:31,899 - [INFO] - Query: 'where is it?' | Intent: 'location' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: exam | FallbackReason: None
 2026-05-17 16:26:36,584 - [INFO] - Query: 'how much is it?' | Intent: 'fees' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: location | FallbackReason: None
+2026-05-17 20:48:46,558 - [INFO] - Successfully loaded all ML model artifacts.
+2026-05-17 20:49:06,269 - [INFO] - Successfully loaded all ML model artifacts.
+2026-05-17 20:49:06,419 - [INFO] - Query: 'where is the software engineering department' | Intent: 'location' (Conf: 1.00) | Entities: [('DEPARTMENT', 'software engineering')] | IsFallback: False
+2026-05-17 20:49:06,439 - [INFO] - Query: 'what time does it open' | Intent: 'location' (Conf: 0.90) | Entities: [('DEPARTMENT', 'information technology')] | IsFallback: False
+2026-05-17 20:49:10,751 - [WARNING] - Query: 'where is the location' | Intent: 'fallback' (Conf: 0.78) | Entities: [] | IsFallback: True

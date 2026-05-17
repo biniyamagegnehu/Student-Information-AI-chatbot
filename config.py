@@ -50,6 +50,8 @@ FALLBACK_RESPONSES = [
 FALLBACK_TYPES = {
     "out_of_domain": "I can only assist with university student information such as registration, courses, fees, exams, calendars, locations, and scholarships.",
     "missing_context": "Could you clarify which service, office, department, or topic you mean?",
-    "low_confidence": "I'm not fully sure I understood your query. Could you please rephrase it?"
+    "low_confidence": "I'm not fully sure I understood your query. Could you please rephrase it?",
+    "missing_location": "I can help with university buildings, departments, offices, and student services. Which location are you asking about?"
 }
+
 

@@ -43,3 +43,6 @@ Just ask me something like 'Where is the library?' or 'When are the exams?'",Fal
 2026-05-17 16:26:22,what about computer science?,exam,0.9000,Exams for Computer Science students will run from June 10 - June 12 (Block B Exam Halls).,False,True,exam,None
 2026-05-17 16:26:31,where is it?,location,0.9000,"You can find the Computer Science department in Block B, Room 201. If you need to contact them, write to cs@university.edu.",False,True,exam,None
 2026-05-17 16:26:36,how much is it?,fees,0.9000,"Semester fees for Computer Science are $4,500. Late enrollment incurs a $100 for late registration.",False,True,location,None
+2026-05-17 20:49:06,where is the software engineering department,location,1.0000,"[('DEPARTMENT', 'software engineering')]","The Software Engineering department is located in Block C, second floor.",False
+2026-05-17 20:49:06,what time does it open,location,0.9000,"[('DEPARTMENT', 'information technology')]",The Software Engineering department office opens from 8:00 AM to 5:00 PM.,False
+2026-05-17 20:49:10,where is the location,fallback,0.7777,[],"I can help with university buildings, departments, offices, and student services. Which location are you asking about?",True

@@ -10,7 +10,7 @@ import config
 from preprocess import preprocess_text
 from context_manager import ContextManager
 from responses import get_response
-from utils import extract_entities
+from ner import extract_entities
 
 # --- AUTOMATIC LOGGING DIRECTORY SETUP ---
 if not os.path.exists(config.LOG_DIR):
@@ -27,26 +27,35 @@ logger = logging.getLogger("ChatbotApp")
 # --- 2. ENHANCED CONVERSATION HISTORY LOG INITIALIZER ---
 def init_history_log():
     """
-    Creates conversation_history.csv with updated fields for Phase 2 auditing.
+    Creates conversation_history.csv with updated fields for Phase 7 auditing.
     """
-    if not os.path.exists(config.CONVERSATION_HISTORY_PATH):
+    expected_header = ["timestamp", "user_input", "intent", "confidence", "entities", "response", "is_fallback"]
+    file_exists = os.path.exists(config.CONVERSATION_HISTORY_PATH)
+    
+    needs_init = not file_exists
+    if file_exists:
+        try:
+            with open(config.CONVERSATION_HISTORY_PATH, 'r', encoding='utf-8') as f:
+                reader = csv.reader(f)
+                header = next(reader, None)
+                if header != expected_header:
+                    needs_init = True
+        except Exception:
+            needs_init = True
+
+    if needs_init:
         try:
             with open(config.CONVERSATION_HISTORY_PATH, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
-                writer.writerow([
-                    "timestamp", "user_query", "predicted_intent", "confidence", 
-                    "response", "fallback_triggered", "context_used", 
-                    "previous_intent", "fallback_reason"
-                ])
+                writer.writerow(expected_header)
         except Exception as e:
             print(f"[Warning] Failed to initialize history CSV: {e}")
 
 init_history_log()
 
-def log_interaction(query: str, intent: str, confidence: float, response: str, 
-                    fallback: bool, context_used: bool, prev_intent: str, fallback_reason: str):
+def log_interaction(query: str, intent: str, confidence: float, entities_raw: list, response: str, is_fallback: bool):
     """
-    Saves a complete conversation interaction transaction with context fields to CSV and app.log.
+    Saves a complete conversation interaction transaction with exact Phase 7 fields to CSV and app.log.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -56,8 +65,7 @@ def log_interaction(query: str, intent: str, confidence: float, response: str,
             writer = csv.writer(f)
             writer.writerow([
                 timestamp, query, intent, f"{confidence:.4f}", 
-                response, str(fallback), str(context_used), 
-                str(prev_intent), str(fallback_reason)
+                str(entities_raw), response, str(is_fallback)
             ])
     except Exception as e:
         logger.error(f"Failed to write to conversation history CSV: {e}")
@@ -65,10 +73,9 @@ def log_interaction(query: str, intent: str, confidence: float, response: str,
     # 2. Log to app.log
     log_msg = (
         f"Query: '{query}' | Intent: '{intent}' (Conf: {confidence:.2f}) | "
-        f"Fallback: {fallback} | ContextUsed: {context_used} | "
-        f"PrevIntent: {prev_intent} | FallbackReason: {fallback_reason}"
+        f"Entities: {entities_raw} | IsFallback: {is_fallback}"
     )
-    if fallback:
+    if is_fallback:
         logger.warning(log_msg)
     else:
         logger.info(log_msg)
@@ -127,7 +134,31 @@ class ChatbotEngine:
         prev_intent = memory_state.get("last_intent")
 
         # --- STEP 1: ENTITY EXTRACTION ---
-        extracted_entities = extract_entities(raw_text_clean)
+        extracted_entities_raw = extract_entities(raw_text_clean)
+        
+        # Build backward-compatible and uppercase dictionary representation of entities
+        extracted_entities = {}
+        for k, v in extracted_entities_raw:
+            k_upper = k.upper()
+            k_lower = k.lower()
+            extracted_entities[k_upper] = v
+            extracted_entities[k_lower] = v
+            
+            # Phase 6 backward-compatibility mapping
+            if k_upper == "BUILDING" and v == "library":
+                extracted_entities["student_services"] = "central library"
+                extracted_entities["STUDENT_SERVICES"] = "central library"
+            if k_upper == "OFFICE":
+                short_val = v.replace(" office", "").strip()
+                extracted_entities["office"] = short_val
+                extracted_entities["OFFICE"] = short_val
+                if short_val == "student affairs":
+                    extracted_entities["student_services"] = "student affairs"
+            if k_upper == "SERVICE":
+                if v == "scholarship":
+                    extracted_entities["scholarship"] = "merit scholarship"
+                if v == "student services":
+                    extracted_entities["student_services"] = "central library"
 
         # --- VARIABLES INITIALIZATION ---
         intent = "fallback"
@@ -246,6 +277,16 @@ class ChatbotEngine:
                     fallback_reason = "low_confidence"
                     fallback_triggered = True
 
+        # --- STEP 3.5: LOCATION FALLBACK GUARDRAIL (Step 7.6) ---
+        if intent == "location" and not fallback_triggered:
+            has_location_entity = any(
+                k in extracted_entities for k in ["BUILDING", "DEPARTMENT", "OFFICE", "LOCATION"]
+            )
+            if not has_location_entity:
+                intent = "fallback"
+                fallback_reason = "missing_location"
+                fallback_triggered = True
+
         # --- STEP 4: STRICT WHITELIST SCOPE VALIDATION ---
         if not fallback_triggered and (intent not in config.ALLOWED_INTENTS or intent == "fallback"):
             intent = "fallback"
@@ -289,9 +330,15 @@ class ChatbotEngine:
 
         # --- STEP 7: LOG INTERACTION ---
         log_interaction(
-            raw_text_clean, intent, confidence, response, 
-            fallback_triggered, context_used, prev_intent, fallback_reason
+            raw_text_clean, intent, confidence, extracted_entities_raw, response, fallback_triggered
         )
+
+        # Print detected entities in debug logs format (Step 7.2)
+        print("\n[DEBUG]")
+        print(f"Intent: {intent}")
+        print(f"Confidence: {confidence:.2f}")
+        print(f"Entities:\n{extracted_entities_raw}")
+        print("-" * 30 + "\n")
 
         return response, intent, confidence, fallback_triggered
 
