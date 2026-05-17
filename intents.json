@@ -1,0 +1,246 @@
+{
+  "intents": [
+    {
+      "tag": "greeting",
+      "patterns": [
+        "Hi",
+        "Hello",
+        "Hey",
+        "Good morning",
+        "Good afternoon",
+        "Is anyone there",
+        "Greetings",
+        "Hey there",
+        "Hi assistant",
+        "What is up",
+        "Howdy"
+      ],
+      "responses": [
+        "Hello! I am your University Student Information Assistant. How can I help you today?",
+        "Greetings! Need information on registration, fees, courses, or campus services? Ask me anything!",
+        "Hi there! How can I assist you with your university student inquiries today?"
+      ]
+    },
+    {
+      "tag": "goodbye",
+      "patterns": [
+        "Bye",
+        "Goodbye",
+        "See you later",
+        "I am leaving",
+        "Talk to you later",
+        "Cya",
+        "Have a good day",
+        "Signing off",
+        "Exit"
+      ],
+      "responses": [
+        "Goodbye! Have a productive day with your studies.",
+        "Take care! Feel free to ask if you need more student information later.",
+        "Bye! Wish you the best of luck with your university coursework."
+      ]
+    },
+    {
+      "tag": "thanks",
+      "patterns": [
+        "Thanks",
+        "Thank you",
+        "That was helpful",
+        "Awesome thanks",
+        "Much appreciated",
+        "Thanks for the info",
+        "Great help",
+        "Thank you so much"
+      ],
+      "responses": [
+        "You are welcome! I'm glad I could help.",
+        "Anytime! Let me know if you need any other student services information.",
+        "Happy to assist! Good luck with your university tasks."
+      ]
+    },
+    {
+      "tag": "help",
+      "patterns": [
+        "Help",
+        "What can you do",
+        "How can you help",
+        "What topics do you support",
+        "Give me information",
+        "Chatbot options",
+        "I need help"
+      ],
+      "responses": [
+        "I am designed to answer questions strictly about university registration, courses, fees, exams, academic calendar, campus locations, contacts, scholarships, and student services.",
+        "I can assist you with student administration topics like semester registration, fee structure, exam timetables, academic calendars, building locations, contact numbers, and scholarships."
+      ]
+    },
+    {
+      "tag": "registration",
+      "patterns": [
+        "How do I register for classes",
+        "Semester registration process",
+        "Enrollment details",
+        "How to register",
+        "When is registration deadline",
+        "I need to register for the next semester",
+        "Class enrollment guide",
+        "Add drop courses",
+        "Registration requirements",
+        "Online enrollment system"
+      ],
+      "responses": [
+        "To register for classes, log in to the Student Portal, navigate to the 'Registration' tab, select your courses, and click submit before the semester deadline.",
+        "Semester registration is completed online via the university enrollment portal. Ensure you have cleared all previous semester dues first.",
+        "The registration guidelines, timeline, and deadlines are published on the 'Admissions & Enrollment' bulletin page of our student portal."
+      ]
+    },
+    {
+      "tag": "courses",
+      "patterns": [
+        "What programs are offered",
+        "List of courses",
+        "What courses can I study",
+        "Degree requirements",
+        "Major list",
+        "Engineering courses",
+        "Business programs",
+        "Available modules",
+        "Computer science syllabus",
+        "Undergraduate course catalog"
+      ],
+      "responses": [
+        "The university offers undergraduate and postgraduate degrees across Engineering, Business, IT, and Arts. Please check the online Academic Catalog for module lists.",
+        "You can view the full list of academic programs, credit requirements, and course syllabi on the university's main 'Academics' portal page.",
+        "Our curriculum offers comprehensive programs in Computer Science, Software Engineering, Mechanical Engineering, and Business Administration."
+      ]
+    },
+    {
+      "tag": "fees",
+      "patterns": [
+        "How much is tuition fee",
+        "Tuition cost per semester",
+        "Payment methods",
+        "When is fee payment deadline",
+        "Semester fees",
+        "Late fee fine",
+        "How to pay fees",
+        "Fee structure",
+        "Dues clearance"
+      ],
+      "responses": [
+        "The tuition and semester fee structure varies by major. You can view your personalized fee invoice and make secure payments on the Student Portal under 'Finance'.",
+        "Fees can be paid online via credit/debit card, bank transfer, or at the campus finance desk in Block A.",
+        "Please ensure your semester fees are paid before the 4th week of the term to avoid late payment penalties."
+      ]
+    },
+    {
+      "tag": "exams",
+      "patterns": [
+        "When is the exam schedule",
+        "Semester exam timetable",
+        "Midterm schedule",
+        "Where is my exam room",
+        "Exam dates",
+        "Final examination timetable",
+        "When do exams start",
+        "Exam routine",
+        "Check my exam schedule"
+      ],
+      "responses": [
+        "The final exam timetable is published on the student portal six weeks before exams begin. It displays dates, times, and designated exam blocks.",
+        "Make sure to bring your Student ID card to all exam rooms. Timetables can be downloaded from the 'Exams and Grading' dashboard.",
+        "Midterm examinations generally happen during the 8th week of the term, while final examinations are held during the 16th week."
+      ]
+    },
+    {
+      "tag": "academic_calendar",
+      "patterns": [
+        "Academic calendar 2026",
+        "Semester start date",
+        "When does semester end",
+        "Holiday dates",
+        "Midterm break",
+        "University calendar",
+        "When is the next break",
+        "List of holidays this year"
+      ],
+      "responses": [
+        "The complete academic calendar, including term start/end dates, holidays, and midterm breaks, is available on the university's 'Academic Calendar' page.",
+        "Our university academic year is divided into Fall, Spring, and Summer semesters. You can download the PDF calendar directly from the student dashboard.",
+        "The next semester is scheduled to begin on the first Monday of September, with the winter holiday break starting mid-December."
+      ]
+    },
+    {
+      "tag": "locations",
+      "patterns": [
+        "Where is the registrar office",
+        "Building locations",
+        "Campus map",
+        "Where is library",
+        "Block A location",
+        "How to find finance office",
+        "Where is main auditorium",
+        "Canteen directions",
+        "Campus address"
+      ],
+      "responses": [
+        "The Registrar's Office is located on the ground floor of Block A. The Central Library is situated in the middle of the main campus plaza.",
+        "You can find a complete, interactive GPS campus map on our university website under 'About Campus' to locate lecture halls, labs, and admin desks.",
+        "Block B houses the Engineering Labs. The Student Canteen is directly adjacent to the sports complex on the west side of the campus."
+      ]
+    },
+    {
+      "tag": "contacts",
+      "patterns": [
+        "University phone number",
+        "Contact email",
+        "Help desk phone",
+        "Registrar contact details",
+        "How to contact IT support",
+        "Advising center email",
+        "Call university support",
+        "Department contact directory"
+      ],
+      "responses": [
+        "You can contact the main University Help Desk at +1-234-567-890 or via email at info@university.edu during working hours (9 AM - 5 PM).",
+        "For registration and transcript issues, contact the Registrar's Helpdesk at registrar@university.edu or call extension 104.",
+        "IT Support can be reached at support@university.edu or at +1-234-567-888 for portal login issues."
+      ]
+    },
+    {
+      "tag": "scholarship",
+      "patterns": [
+        "Is there financial aid",
+        "How to apply for scholarship",
+        "Available scholarships",
+        "Merit based scholarship",
+        "Scholarship application form",
+        "Tuition waiver requirements",
+        "Undergraduate scholarships"
+      ],
+      "responses": [
+        "The university offers merit-based and need-based scholarships. Applications open annually under the 'Financial Aid' portal tab.",
+        "To maintain your merit scholarship, you must maintain a minimum cumulative GPA of 3.5 each semester.",
+        "Completed financial aid applications with supporting documents must be submitted to the Student Affairs office in Block C."
+      ]
+    },
+    {
+      "tag": "student_services",
+      "patterns": [
+        "Student services office",
+        "Counseling center location",
+        "Career services details",
+        "Clubs and societies",
+        "Gym operating hours",
+        "Disability support services",
+        "Student portal login help",
+        "Lost and found department"
+      ],
+      "responses": [
+        "The Student Services Center in Block C provides academic advising, personal counseling, career guidance, and disability services.",
+        "You can join over 30 student clubs and societies. Visit the Student Union desk in Block C to register and get active on campus.",
+        "The campus gym and sports complex are open to all registered students daily from 6 AM to 9 PM (requires Student ID entry)."
+      ]
+    }
+  ]
+}

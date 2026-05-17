@@ -1,164 +1,96 @@
+# preprocess.py
 import re
-import unicodedata
+import string
 import nltk
-import spacy
-from spacy.pipeline import EntityRuler
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
-import os
-from datetime import datetime
 
-# Optional: RapidFuzz for typo correction
+# --- NLTK SAFE DOWNLOAD SYSTEM ---
 try:
-    from rapidfuzz import process, fuzz
-    HAS_RAPIDFUZZ = True
-except ImportError:
-    import difflib
-    HAS_RAPIDFUZZ = False
+    nltk.data.find('corpora/stopwords')
+except LookupError:
+    nltk.download('stopwords', quiet=True)
 
-# --- NLTK Setup ---
-nltk.download('punkt', quiet=True)
-nltk.download('punkt_tab', quiet=True)
-nltk.download('stopwords', quiet=True)
-nltk.download('wordnet', quiet=True)
-nltk.download('omw-1.4', quiet=True)
-
-# --- spaCy NER Setup ---
 try:
-    nlp = spacy.load("en_core_web_sm")
-    if "entity_ruler" not in nlp.pipe_names:
-        ruler = nlp.add_pipe("entity_ruler", before="ner")
-        patterns = [
-            {"label": "STUDENT_ID", "pattern": [{"TEXT": {"REGEX": "^[0-9]{5,8}$"}}]},
-            {"label": "DEPARTMENT", "pattern": [{"LOWER": "computer"}, {"LOWER": "science"}]},
-            {"label": "DEPARTMENT", "pattern": [{"LOWER": "software"}, {"LOWER": "engineering"}]},
-            {"label": "BUILDING", "pattern": [{"LOWER": "block"}, {"LOWER": {"REGEX": "^[a-z0-9]+$"}}]},
-            {"label": "BUILDING", "pattern": [{"LOWER": "library"}]},
-            {"label": "BUILDING", "pattern": [{"LOWER": "hostel"}]},
-            {"label": "OFFICE", "pattern": [{"LOWER": "registrar"}]},
-            {"label": "INSTRUCTOR", "pattern": [{"LOWER": {"IN": ["professor", "prof", "dr", "dr."]}}, {"IS_ALPHA": True}]},
-            {"label": "SEMESTER", "pattern": [{"LOWER": "semester"}, {"LIKE_NUM": True}]},
-            {"label": "PAYMENT", "pattern": [{"LOWER": "tuition"}]},
-            {"label": "PAYMENT", "pattern": [{"LOWER": "fee"}]}
-        ]
-        ruler.add_patterns(patterns)
-except Exception:
-    print("Warning: spaCy model 'en_core_web_sm' not found. NER will be limited.")
-    nlp = None
+    nltk.data.find('corpora/wordnet')
+except LookupError:
+    nltk.download('wordnet', quiet=True)
 
-# --- Preprocessing Constants ---
-SHORTHAND_EXPANSIONS = {
-    "pls": "please", "plz": "please", "info": "information", "admin": "administration",
-    "dept": "department", "cs": "computer science", "it": "information technology",
-    "lab": "laboratory", "dorm": "dormitory", "registar": "registrar", "uni": "university",
-    "asap": "urgently", "wher": "where"
-}
+try:
+    nltk.data.find('tokenizers/punkt')
+except LookupError:
+    nltk.download('punkt', quiet=True)
 
-DOMAIN_VOCABULARY = [
-    "registration", "semester", "transcript", "library", "registrar", "fee", "tuition",
-    "scholarship", "exam", "course", "hostel", "admission", "department", "office", "campus",
-    "block", "dormitory", "schedule", "deadline", "payment", "instructor", "professor",
-    "timetable", "routine", "dorm", "cafeteria", "clearance", "enrollment", "transfer",
-    "holiday", "vacation", "ceremony", "grade", "results", "clinic", "stadium"
-]
-
+# Initialize NLP Utilities
 lemmatizer = WordNetLemmatizer()
 stop_words = set(stopwords.words('english'))
 
-class InputValidator:
-    """
-    Sanitizes and validates user input before it hits the NLP pipeline.
-    """
-    MAX_INPUT_LENGTH = 150
-    
-    @staticmethod
-    def validate_and_sanitize(text):
-        if not text or not text.strip():
-            return False, "", "Please enter a valid message."
-            
-        text = unicodedata.normalize('NFKC', text)
-            
-        if len(text) > InputValidator.MAX_INPUT_LENGTH:
-            return False, "", f"Your message is too long (Max {InputValidator.MAX_INPUT_LENGTH} chars)."
-            
-        if re.search(r'<[^>]+>', text):
-            text = re.sub(r'<[^>]+>', '', text)
-            
-        if re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', text):
-            return False, "", "URLs are not allowed for security reasons."
-            
-        text = re.sub(r'(.)\1{3,}', r'\1\1', text) 
-        text = re.sub(r'[^\w\s\.\?\!\,\-\'\"]', ' ', text)
-        text = re.sub(r'\s+', ' ', text).strip()
-        
-        if not text:
-            return False, "", "Your message contained invalid characters."
-            
-        return True, text, ""
+# --- TYPO NORMALIZATION DICTIONARY ---
+TYPO_DICTIONARY = {
+    "regstration": "registration",
+    "registraion": "registration",
+    "regestration": "registration",
+    "scheduel": "schedule",
+    "scheduelle": "schedule",
+    "examn": "exam",
+    "exm": "exam",
+    "cources": "courses",
+    "cource": "course",
+    "scholrship": "scholarship",
+    "scholership": "scholarship",
+    "calender": "calendar",
+    "acadmic": "academic",
+    "libary": "library",
+    "locaton": "location",
+    "contat": "contact",
+    "contcts": "contacts",
+    "admision": "admission", # While admission is disallowed, keep correction clean
+    "fee": "fees"
+}
 
-def apply_typo_correction(word):
+def clean_text(text: str) -> str:
     """
-    Applies shorthand expansion and fuzzy spell correction.
+    Standard preprocessing pipeline used consistently during training and inference.
+    Processes string through:
+    1. Lowercase conversion
+    2. Typo normalization
+    3. Punctuation removal
+    4. Tokenization
+    5. Stopword filtering
+    6. Lemmatization
+    7. Whitespace cleanup
     """
-    if word in SHORTHAND_EXPANSIONS:
-        return SHORTHAND_EXPANSIONS[word]
-        
-    if len(word) <= 3 or word in stop_words:
-        return word
-        
-    if HAS_RAPIDFUZZ:
-        match = process.extractOne(word, DOMAIN_VOCABULARY, scorer=fuzz.ratio, score_cutoff=80)
-        if match:
-            return match[0]
-    else:
-        import difflib
-        matches = difflib.get_close_matches(word, DOMAIN_VOCABULARY, n=1, cutoff=0.8)
-        if matches:
-            return matches[0]
-            
-    return word
-
-def preprocess_text(text):
-    """
-    Cleans and normalizes text for the ML model.
-    """
-    if not isinstance(text, str):
+    if not text or not isinstance(text, str):
         return ""
-        
-    text = text.lower()
-    text = re.sub(r'\d+', '', text)
-    text = re.sub(r'[^\w\s]', ' ', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    
+
+    # 1. Lowercase conversion
+    text = text.lower().strip()
+
+    # 2. Split words to normalize typos using dictionary
+    words = text.split()
+    normalized_words = [TYPO_DICTIONARY.get(word, word) for word in words]
+    text = " ".join(normalized_words)
+
+    # 3. Punctuation removal (keep spaces)
+    # Replaces punctuation symbols with a single space
+    punctuation_pattern = re.compile(f"[{re.escape(string.punctuation)}]")
+    text = punctuation_pattern.sub(" ", text)
+
+    # 4. Tokenization (handles multi-spacing cleanly)
     try:
-        words = word_tokenize(text)
-    except LookupError:
-        words = text.split()
-    
-    clean_words = []
-    for word in words:
-        corrected_phrase = apply_typo_correction(word)
-        for corrected_word in corrected_phrase.split():
-            if corrected_word not in stop_words:
-                lemma = lemmatizer.lemmatize(corrected_word)
-                clean_words.append(lemma)
-            
-    return ' '.join(clean_words)
+        tokens = word_tokenize(text)
+    except Exception:
+        tokens = text.split()
 
-def extract_all_entities(text):
-    """
-    Extracts university-related entities using spaCy and Regex.
-    """
-    entities = []
-    if nlp:
-        doc = nlp(text)
-        entities = [(ent.label_, ent.text) for ent in doc.ents]
-    
-    # Regex Fallback for ID
-    id_match = re.search(r'\b\d{5,8}\b', text)
-    if id_match:
-        entities.append(("STUDENT_ID", id_match.group(0)))
-        
-    return list(set(entities))
+    # 5 & 6. Stopword removal & Lemmatization
+    cleaned_tokens = []
+    for token in tokens:
+        if token not in stop_words:
+            # Lemmatize both noun and verb forms for max generalizability
+            lemma = lemmatizer.lemmatize(token, pos='v')
+            lemma = lemmatizer.lemmatize(lemma, pos='n')
+            cleaned_tokens.append(lemma)
 
+    # 7. Whitespace cleanup & join
+    return " ".join(cleaned_tokens).strip()

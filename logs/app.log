@@ -1,0 +1,7 @@
+2026-05-17 13:06:08,265 - [INFO] - Successfully loaded all ML model artifacts.
+2026-05-17 13:06:22,373 - [WARNING] - Query: 'Hello' | Intent: 'fallback' (Conf: 0.50) | Fallback: True
+2026-05-17 13:06:31,486 - [INFO] - Query: 'How do I register for classes?' | Intent: 'registration' (Conf: 0.67) | Fallback: False
+2026-05-17 13:06:36,369 - [WARNING] - Query: 'what is the tuition fess?' | Intent: 'fallback' (Conf: 0.40) | Fallback: True
+2026-05-17 13:06:41,989 - [WARNING] - Query: 'where can I see the class scheduel?' | Intent: 'fallback' (Conf: 0.36) | Fallback: True
+2026-05-17 13:06:46,852 - [INFO] - Query: 'when is the exam scheduel?' | Intent: 'exams' (Conf: 0.75) | Fallback: False
+2026-05-17 13:06:52,410 - [WARNING] - Query: 'what is the price of bitcoin?' | Intent: 'fallback' (Conf: 0.17) | Fallback: True

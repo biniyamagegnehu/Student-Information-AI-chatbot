@@ -1,124 +1,182 @@
-import tkinter as tk
-from tkinter import scrolledtext
-import joblib
+# app.py
 import os
-import threading
-import time
+import csv
+import logging
+import joblib
 from datetime import datetime
 
-# Local Modular Imports
-from preprocess import InputValidator, preprocess_text, extract_all_entities
-from responses import get_final_response
-from logs.chatbot_logger import ChatbotLogger
+# Local modular imports
+import config
+from preprocess import clean_text
+from responses import get_response
 
-# --- Load ML Model Artifacts ---
-MODEL_PATH = "model/model.pkl"
-VEC_PATH = "model/vectorizer.pkl"
+# --- AUTOMATIC LOGGING DIRECTORY SETUP ---
+if not os.path.exists(config.LOG_DIR):
+    os.makedirs(config.LOG_DIR)
 
-if os.path.exists(MODEL_PATH) and os.path.exists(VEC_PATH):
+# --- 1. GENERAL APP LOGGER SETUP ---
+logging.basicConfig(
+    filename=config.APP_LOG_PATH,
+    level=logging.INFO,
+    format='%(asctime)s - [%(levelname)s] - %(message)s'
+)
+logger = logging.getLogger("ChatbotApp")
+
+# --- 2. CONVERSATION HISTORY LOG INITIALIZER ---
+def init_history_log():
+    """
+    Creates conversation_history.csv with appropriate columns if it doesn't exist.
+    """
+    if not os.path.exists(config.CONVERSATION_HISTORY_PATH):
+        with open(config.CONVERSATION_HISTORY_PATH, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["timestamp", "user_query", "predicted_intent", "confidence", "response", "fallback_triggered"])
+
+init_history_log()
+
+def log_interaction(query: str, intent: str, confidence: float, response: str, fallback: bool):
+    """
+    Saves the interaction transaction to both conversation_history.csv and app.log.
+    """
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Log to CSV
     try:
-        model = joblib.load(MODEL_PATH)
-        vectorizer = joblib.load(VEC_PATH)
-    except Exception:
-        model, vectorizer = None, None
-else:
-    model, vectorizer = None, None
+        with open(config.CONVERSATION_HISTORY_PATH, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow([timestamp, query, intent, f"{confidence:.4f}", response, str(fallback)])
+    except Exception as e:
+        logger.error(f"Failed to write to conversation history CSV: {e}")
 
-def predict_intent(user_input):
-    """
-    Validates, preprocesses, and predicts intent using the loaded model.
-    """
-    if model is None or vectorizer is None:
-        return "System error: Model files missing.", 0.0, "error", [], True
+    # Log to app.log
+    log_msg = f"Query: '{query}' | Intent: '{intent}' (Conf: {confidence:.2f}) | Fallback: {fallback}"
+    if fallback:
+        logger.warning(log_msg)
+    else:
+        logger.info(log_msg)
 
-    # 1. Validation & Sanitization
-    is_valid, sanitized_input, error_msg = InputValidator.validate_and_sanitize(user_input)
-    if not is_valid:
-        return error_msg, 0.0, "invalid", [], True
 
-    # 2. Entity Extraction
-    entities = extract_all_entities(sanitized_input)
+# --- CHATBOT ENGINE ---
+class ChatbotEngine:
+    def __init__(self):
+        self.model = None
+        self.vectorizer = None
+        self.label_encoder = None
+        self.is_loaded = False
+        self.load_artifacts()
+
+    def load_artifacts(self):
+        """
+        Loads trained model, vectorizer, and label encoder.
+        Gracefully handles file-missing scenarios.
+        """
+        if (os.path.exists(config.MODEL_PATH) and 
+            os.path.exists(config.VECTORIZER_PATH) and 
+            os.path.exists(config.LABEL_ENCODER_PATH)):
+            try:
+                self.model = joblib.load(config.MODEL_PATH)
+                self.vectorizer = joblib.load(config.VECTORIZER_PATH)
+                self.label_encoder = joblib.load(config.LABEL_ENCODER_PATH)
+                self.is_loaded = True
+                logger.info("Successfully loaded all ML model artifacts.")
+            except Exception as e:
+                logger.error(f"Error loading model files: {e}")
+                print(f"[ERROR] Failed to load model files: {e}")
+        else:
+            logger.warning("Model files missing. Application starting in fallback-only mode.")
+
+    def get_reply(self, raw_text: str):
+        """
+        Processes query: Clean -> Vectorize -> Predict -> Threshold Check -> Log -> Return
+        """
+        raw_text_clean = raw_text.strip()
+        if not raw_text_clean:
+            return "Please enter a valid message.", "none", 0.0, False
+
+        # 1. Pipeline Preprocessing
+        processed_query = clean_text(raw_text_clean)
+
+        # 2. Check if model is available, otherwise trigger safety fallback
+        if not self.is_loaded:
+            response = get_response("fallback") # Out of scope
+            log_interaction(raw_text_clean, "untrained_model", 0.0, response, True)
+            return response, "untrained_model", 0.0, True
+
+        # 3. Model Prediction
+        try:
+            vec = self.vectorizer.transform([processed_query])
+            probabilities = self.model.predict_proba(vec)[0]
+            max_index = probabilities.argmax()
+            confidence = float(probabilities[max_index])
+            intent = self.label_encoder.inverse_transform([max_index])[0]
+        except Exception as e:
+            logger.error(f"Prediction error: {e}")
+            response = get_response("fallback")
+            log_interaction(raw_text_clean, "prediction_error", 0.0, response, True)
+            return response, "prediction_error", 0.0, True
+
+        # 4. Strict Scope & Confidence Threshold Guardrails
+        fallback_triggered = False
+        if confidence < config.CONFIDENCE_THRESHOLD:
+            intent = "fallback"
+            fallback_triggered = True
+            
+        if intent not in config.ALLOWED_INTENTS:
+            intent = "fallback"
+            fallback_triggered = True
+
+        # 5. Fetch Final Response
+        response = get_response(intent)
+
+        # 6. Log Transaction
+        log_interaction(raw_text_clean, intent, confidence, response, fallback_triggered)
+
+        return response, intent, confidence, fallback_triggered
+
+
+# --- INTERACTIVE CLI TEST ENVIRONMENT ---
+def run_cli():
+    print("=" * 60)
+    print("      UNIVERSITY STUDENT INFORMATION ASSISTANT (CLI v1.0)")
+    print("=" * 60)
+    print("Domain Focus: Registration, Courses, Fees, Exams, Calendars, Locations,")
+    print("              Contacts, Scholarships, and Student Services.")
+    print("-" * 60)
+    print("System is online. Type 'exit', 'quit', or 'bye' to end the session.\n")
+
+    engine = ChatbotEngine()
     
-    # 3. Preprocessing for Vectorization
-    clean_text = preprocess_text(sanitized_input)
-    if not clean_text:
-        return "I didn't quite catch that. Could you rephrase?", 0.0, "unknown", [], True
-
-    # 4. ML Prediction
-    user_vec = vectorizer.transform([clean_text])
-    probabilities = model.predict_proba(user_vec)[0]
-    max_prob = max(probabilities)
-    prediction = model.classes_[probabilities.argmax()]
+    if not engine.is_loaded:
+        print("[WARNING] Model artifacts not found inside 'model/'.")
+        print("          Running in Safe Fallback/Ad-hoc mode. Please run train.py first!\n")
+    else:
+        print("[SYSTEM] Calibrated classifier and TF-IDF pipeline loaded successfully.")
+        print(f"[SYSTEM] Confidence Threshold set to {config.CONFIDENCE_THRESHOLD:.2f}")
     
-    # 5. Response Mapping
-    response, is_fallback = get_final_response(prediction, max_prob, entities, sanitized_input)
-    
-    # 6. Centralized Logging (Section F)
-    # Logging includes confidence, intent, and entities for debugging
-    log_msg = f"Intent: {prediction} | Conf: {max_prob:.2f} | Entities: {entities} | Fallback: {is_fallback}"
-    ChatbotLogger.log_interaction(user_input, prediction, max_prob, entities, response, is_fallback)
-    
-    return response, max_prob, prediction, entities, is_fallback
+    print("-" * 60)
+    print("Assistant: Welcome! How can I help you with your student inquiries today?\n")
 
-# --- MODERN GUI SECTION ---
-class ChatBotGUI:
-    def __init__(self, master):
-        self.master = master
-        self.master.title("University AI Assistant")
-        self.master.geometry("550x700")
-        self.master.configure(bg="#0F111A")
-        
-        # Theme
-        self.BG_COLOR = "#0F111A"
-        self.TEXT_BG = "#1A1D2D"
-        self.USER_BG = "#0A84FF"
-        self.BOT_BG = "#2B2F42"
-        self.TEXT_COLOR = "#FFFFFF"
+    while True:
+        try:
+            user_input = input("You: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAssistant: Goodbye!")
+            break
 
-        # Chat Window
-        self.chat_area = scrolledtext.ScrolledText(master, bg=self.BG_COLOR, fg=self.TEXT_COLOR, font=("Inter", 11), wrap=tk.WORD, borderwidth=0)
-        self.chat_area.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
-        self.chat_area.config(state=tk.DISABLED)
+        if not user_input:
+            continue
 
-        # Input Frame
-        self.input_frame = tk.Frame(master, bg=self.BG_COLOR)
-        self.input_frame.pack(fill=tk.X, side=tk.BOTTOM, padx=20, pady=20)
+        if user_input.lower() in ["exit", "quit", "bye"]:
+            print("\nAssistant: Goodbye! Have a wonderful day studying.")
+            break
 
-        self.user_input = tk.Entry(self.input_frame, bg=self.TEXT_BG, fg=self.TEXT_COLOR, font=("Inter", 12), borderwidth=0, insertbackground="white")
-        self.user_input.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=10, padx=(0, 10))
-        self.user_input.bind("<Return>", self.send_message)
+        # Process prediction
+        response, intent, conf, fallback = engine.get_reply(user_input)
 
-        self.send_button = tk.Button(self.input_frame, text="Send", command=self.send_message, bg=self.USER_BG, fg="white", font=("Inter", 10, "bold"), borderwidth=0, padx=20)
-        self.send_button.pack(side=tk.RIGHT)
-
-        self.display_message("System", "Bot is ready! Type a message to begin.")
-        if not model:
-            self.display_message("Warning", "Model files not found. Please run train.py first!")
-
-    def display_message(self, sender, message):
-        self.chat_area.config(state=tk.NORMAL)
-        timestamp = datetime.now().strftime("%H:%M")
-        self.chat_area.insert(tk.END, f"[{timestamp}] {sender}: {message}\n\n")
-        self.chat_area.config(state=tk.DISABLED)
-        self.chat_area.see(tk.END)
-
-    def send_message(self, event=None):
-        msg = self.user_input.get().strip()
-        if not msg: return
-        
-        self.user_input.delete(0, tk.END)
-        self.display_message("You", msg)
-        
-        # Start typing animation/threading for response
-        threading.Thread(target=self.process_response, args=(msg,)).start()
-
-    def process_response(self, msg):
-        time.sleep(0.5) # Simulate thinking
-        response, prob, intent, entities, is_fallback = predict_intent(msg)
-        self.display_message("Assistant", response)
+        # Output reply
+        print(f"Assistant: {response}")
+        print(f"  [Debug] Predicted Intent: {intent} (Confidence: {conf:.2f}) | Fallback Triggered: {fallback}")
+        print("-" * 60)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    gui = ChatBotGUI(root)
-    root.mainloop()
-
+    run_cli()

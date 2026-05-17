@@ -1,21 +1,17 @@
---- HUMAN EVALUATION FAILURE AUDIT [2026-05-16 14:30:14.796567] ---
-Total Misclassifications: 9
+--- HUMAN EVALUATION FAILURE AUDIT [2026-05-17 12:35:08.470857] ---
+Total Misclassifications: 8
 
 INPUT: late registration fee?
 EXPECTED: registration
-PREDICTED: fees (Conf: 0.54)
-------------------------------
-INPUT: can i add a course now?
-EXPECTED: registration
-PREDICTED: courses (Conf: 0.51)
+PREDICTED: fees (Conf: 0.55)
 ------------------------------
 INPUT: when is my next class?
 EXPECTED: schedule
-PREDICTED: holidays (Conf: 0.41)
+PREDICTED: holidays (Conf: 0.45)
 ------------------------------
 INPUT: is there class tomorrow?
 EXPECTED: schedule
-PREDICTED: holidays (Conf: 0.71)
+PREDICTED: holidays (Conf: 0.70)
 ------------------------------
 INPUT: timetable for computer science
 EXPECTED: schedule
@@ -27,11 +23,11 @@ PREDICTED: fees (Conf: 0.53)
 ------------------------------
 INPUT: laundry services in dorms?
 EXPECTED: hostel
-PREDICTED: contacts (Conf: 0.52)
+PREDICTED: contacts (Conf: 0.36)
 ------------------------------
 INPUT: registrar office hours
 EXPECTED: contacts
-PREDICTED: location (Conf: 0.71)
+PREDICTED: location (Conf: 0.69)
 ------------------------------
 INPUT: take care
 EXPECTED: bye
