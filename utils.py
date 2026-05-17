@@ -156,17 +156,17 @@ def resolve_context(query: str, last_state: dict) -> (str, str, dict):
 
     # 1. TIME INQUIRIES ("when is it?")
     if is_time:
-        if last_intent in ["exams", "registration", "academic_calendar", "scholarship"]:
+        if last_intent in ["exam", "registration", "schedule", "scholarship"]:
             inferred_intent = last_intent
         else:
-            inferred_intent = "academic_calendar" # General default for dates
+            inferred_intent = "schedule" # General default for dates
             
     # 2. SPATIAL INQUIRIES ("where is it?")
     elif is_spatial:
-        if last_intent in ["locations", "student_services", "contacts"]:
+        if last_intent in ["location", "student_services", "contacts"]:
             inferred_intent = last_intent
         else:
-            inferred_intent = "locations" # Redirect to locations
+            inferred_intent = "location" # Redirect to locations
 
     # 3. COST INQUIRIES ("how much is it?")
     elif is_cost:

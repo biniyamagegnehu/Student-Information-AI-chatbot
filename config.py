@@ -26,16 +26,17 @@ ALLOWED_INTENTS = {
     "registration",
     "courses",
     "fees",
-    "exams",
-    "academic_calendar",
-    "locations",
+    "exam",
+    "schedule",
+    "location",
     "contacts",
     "scholarship",
     "student_services",
     "greeting",
     "goodbye",
     "thanks",
-    "help"
+    "help",
+    "fallback"
 }
 
 # --- GLOBAL FALLBACK RESPONSES ---

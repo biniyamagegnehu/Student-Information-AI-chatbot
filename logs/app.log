@@ -21,3 +21,8 @@
 2026-05-17 16:04:33,297 - [WARNING] - Query: 'can you tell me a joke?' | Intent: 'fallback' (Conf: 0.20) | Fallback: True | ContextUsed: False | PrevIntent: fees | FallbackReason: low_confidence
 2026-05-17 16:05:00,511 - [INFO] - Query: 'what is the weather at the library?' | Intent: 'student_services' (Conf: 1.00) | Fallback: False | ContextUsed: False | PrevIntent: fees | FallbackReason: None
 2026-05-17 16:05:12,324 - [INFO] - Query: 'what is the price of ethereum?' | Intent: 'help' (Conf: 0.55) | Fallback: False | ContextUsed: False | PrevIntent: student_services | FallbackReason: None
+2026-05-17 16:25:46,453 - [INFO] - Successfully loaded all ML model artifacts.
+2026-05-17 16:26:13,213 - [INFO] - Query: 'when are the exams?' | Intent: 'exam' (Conf: 0.76) | Fallback: False | ContextUsed: False | PrevIntent: None | FallbackReason: None
+2026-05-17 16:26:22,443 - [INFO] - Query: 'what about computer science?' | Intent: 'exam' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: exam | FallbackReason: None
+2026-05-17 16:26:31,899 - [INFO] - Query: 'where is it?' | Intent: 'location' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: exam | FallbackReason: None
+2026-05-17 16:26:36,584 - [INFO] - Query: 'how much is it?' | Intent: 'fees' (Conf: 0.90) | Fallback: False | ContextUsed: True | PrevIntent: location | FallbackReason: None

@@ -39,3 +39,7 @@ Just ask me something like 'Where is the library?' or 'When are the exams?'",Fal
 2026-05-17 16:04:33,can you tell me a joke?,fallback,0.2040,I'm not fully sure I understood your query. Could you please rephrase it?,True,False,fees,low_confidence
 2026-05-17 16:05:00,what is the weather at the library?,student_services,1.0000,The Central Library office is situated at Central Plaza Building. Contact them at library@university.edu for inquiries.,False,False,fees,None
 2026-05-17 16:05:12,what is the price of ethereum?,help,0.5454,"I can assist you with student administration topics like semester registration, fee structure, exam timetables, academic calendars, building locations, contact numbers, and scholarships.",False,False,student_services,None
+2026-05-17 16:26:13,when are the exams?,exam,0.7589,"If you miss a final exam due to medical emergencies, submit a makeup exam application with official hospital certificates within 48 hours to Student Affairs.",False,False,None,None
+2026-05-17 16:26:22,what about computer science?,exam,0.9000,Exams for Computer Science students will run from June 10 - June 12 (Block B Exam Halls).,False,True,exam,None
+2026-05-17 16:26:31,where is it?,location,0.9000,"You can find the Computer Science department in Block B, Room 201. If you need to contact them, write to cs@university.edu.",False,True,exam,None
+2026-05-17 16:26:36,how much is it?,fees,0.9000,"Semester fees for Computer Science are $4,500. Late enrollment incurs a $100 for late registration.",False,True,location,None

@@ -44,7 +44,7 @@ def generate_entity_response(intent: str, entities: dict) -> str:
         return None
 
     # 1. INTENT: LOCATIONS (Dynamic Blocks, Rooms, Maps)
-    if intent == "locations":
+    if intent == "location":
         if "department" in entities:
             dept = entities["department"]
             data = kb.get("departments", {}).get(dept)
@@ -93,7 +93,7 @@ def generate_entity_response(intent: str, entities: dict) -> str:
                 return f"I currently do not have fee examples for the {dept.title()} program."
 
     # 3. INTENT: EXAMINATIONS
-    elif intent == "exams":
+    elif intent == "exam":
         if "department" in entities:
             dept = entities["department"]
             date_info = kb.get("exam_schedule", {}).get(dept)

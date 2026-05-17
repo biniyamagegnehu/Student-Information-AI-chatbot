@@ -144,7 +144,7 @@ class ChatbotEngine:
             # A. Spatial locations check
             if any(w in raw_lower for w in ["where", "location", "block", "room", "office", "find", "map", "address", "building", "floor"]):
                 if any(k in extracted_entities for k in ["department", "office", "student_services"]):
-                    intent = "locations"
+                    intent = "location"
                     confidence = 1.0
                     heuristics_matched = True
             
@@ -158,7 +158,7 @@ class ChatbotEngine:
             # C. Exams check
             elif any(w in raw_lower for w in ["exam", "exams", "examination", "test", "schedule", "timetable", "routine", "midterm", "final"]):
                 if "department" in extracted_entities:
-                    intent = "exams"
+                    intent = "exam"
                     confidence = 1.0
                     heuristics_matched = True
 
@@ -220,11 +220,11 @@ class ChatbotEngine:
                     effective_threshold = config.CONFIDENCE_THRESHOLD
                     if extracted_entities:
                         # Lower the required threshold if we have extracted a matching domain entity
-                        if predicted_intent == "locations" and any(k in extracted_entities for k in ["department", "office", "student_services"]):
+                        if predicted_intent == "location" and any(k in extracted_entities for k in ["department", "office", "student_services"]):
                             effective_threshold = 0.25
                         elif predicted_intent == "fees" and "department" in extracted_entities:
                             effective_threshold = 0.25
-                        elif predicted_intent == "exams" and "department" in extracted_entities:
+                        elif predicted_intent == "exam" and "department" in extracted_entities:
                             effective_threshold = 0.25
                         elif predicted_intent == "contacts" and any(k in extracted_entities for k in ["department", "office"]):
                             effective_threshold = 0.25
@@ -246,9 +246,10 @@ class ChatbotEngine:
                     fallback_triggered = True
 
         # --- STEP 4: STRICT WHITELIST SCOPE VALIDATION ---
-        if not fallback_triggered and intent not in config.ALLOWED_INTENTS:
+        if not fallback_triggered and (intent not in config.ALLOWED_INTENTS or intent == "fallback"):
             intent = "fallback"
-            fallback_reason = "out_of_domain"
+            if not fallback_reason:
+                fallback_reason = "out_of_domain"
             fallback_triggered = True
 
         # --- STEP 5: RESPONSE DISPATCHING ---
