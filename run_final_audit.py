@@ -178,7 +178,7 @@ def audit_context(engine: ChatbotEngine):
 def audit_csv():
     section("CSV LOGGING SCHEMA (Phase 8 Format)")
     path = "logs/conversation_history.csv"
-    expected = ["timestamp", "user_input", "intent", "confidence", "response", "is_fallback", "is_ood"]
+    expected = ["timestamp", "user_input", "intent", "confidence", "entities", "response", "is_fallback", "is_ood"]
     if not os.path.exists(path):
         result(False, f"CSV file not found at {path}")
         return 0, 1

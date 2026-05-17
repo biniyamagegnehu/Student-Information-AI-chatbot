@@ -12,73 +12,7 @@ from context_manager import ContextManager
 from responses import get_response
 from ner import extract_entities
 
-# --- AUTOMATIC LOGGING DIRECTORY SETUP ---
-if not os.path.exists(config.LOG_DIR):
-    os.makedirs(config.LOG_DIR)
-
-# --- 1. GENERAL APP SYSTEM LOGGER ---
-logging.basicConfig(
-    filename=config.APP_LOG_PATH,
-    level=logging.INFO,
-    format='%(asctime)s - [%(levelname)s] - %(message)s'
-)
-logger = logging.getLogger("ChatbotApp")
-
-# --- 2. ENHANCED CONVERSATION HISTORY LOG INITIALIZER ---
-def init_history_log():
-    """
-    Creates conversation_history.csv with updated fields for Phase 8 auditing.
-    """
-    expected_header = ["timestamp", "user_input", "intent", "confidence", "response", "is_fallback", "is_ood"]
-    file_exists = os.path.exists(config.CONVERSATION_HISTORY_PATH)
-    
-    needs_init = not file_exists
-    if file_exists:
-        try:
-            with open(config.CONVERSATION_HISTORY_PATH, 'r', encoding='utf-8') as f:
-                reader = csv.reader(f)
-                header = next(reader, None)
-                if header != expected_header:
-                    needs_init = True
-        except Exception:
-            needs_init = True
-
-    if needs_init:
-        try:
-            with open(config.CONVERSATION_HISTORY_PATH, 'w', newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(expected_header)
-        except Exception as e:
-            print(f"[Warning] Failed to initialize history CSV: {e}")
-
-init_history_log()
-
-def log_interaction(query: str, intent: str, confidence: float, response: str, is_fallback: bool, is_ood: bool = False):
-    """
-    Saves a complete conversation interaction transaction with exact Phase 8 fields to CSV and app.log.
-    """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    # 1. Log to CSV
-    try:
-        with open(config.CONVERSATION_HISTORY_PATH, 'a', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow([
-                timestamp, query, intent, f"{confidence:.4f}", 
-                response, str(is_fallback), str(is_ood)
-            ])
-    except Exception as e:
-        logger.error(f"Failed to write to conversation history CSV: {e}")
-
-    # 2. Log to app.log
-    log_msg = (
-        f"Query: '{query}' | Intent: '{intent}' (Conf: {confidence:.2f}) | "
-        f"IsFallback: {is_fallback} | IsOOD: {is_ood}"
-    )
-    if is_fallback or is_ood:
-        logger.warning(log_msg)
-    else:
-        logger.info(log_msg)
+from logger_utils import logger, log_interaction
 
 
 # --- CHATBOT RUNTIME ENGINE ---
@@ -152,7 +86,7 @@ class ChatbotEngine:
             
             # Log to CSV (Step 8.7)
             log_interaction(
-                raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=True
+                raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=True, entities=[]
             )
             
             # Print debug info (Step 8.8)
@@ -388,7 +322,7 @@ class ChatbotEngine:
 
         # --- STEP 7: LOG INTERACTION ---
         log_interaction(
-            raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=False
+            raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=False, entities=extracted_entities_raw
         )
 
         # Print detected entities in debug logs format (Step 7.2)
@@ -442,7 +376,7 @@ def run_cli():
 
         # Output reply
         print(f"Assistant: {response}")
-        print(f"  [Debug] Predicted Intent: {intent} (Confidence: {conf:.2f}) | Fallback Triggered: {fallback}")
+        print(f"[Debug] Predicted Intent: {intent} (Confidence: {conf:.2f}) | Fallback: {fallback}")
         print("-" * 60)
 
 if __name__ == "__main__":

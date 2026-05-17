@@ -136,7 +136,7 @@ def run_ood_audit():
         with open(csv_path, 'r', encoding='utf-8') as f:
             reader = csv.reader(f)
             header = next(reader, None)
-            expected_header = ["timestamp", "user_input", "intent", "confidence", "response", "is_fallback", "is_ood"]
+            expected_header = ["timestamp", "user_input", "intent", "confidence", "entities", "response", "is_fallback", "is_ood"]
             print(f"CSV Header: {header}")
             if header == expected_header:
                 print("[PASS] CSV headers perfectly match Phase 8 requirements.")
@@ -145,7 +145,7 @@ def run_ood_audit():
                 rows = list(reader)
                 if rows:
                     last_row = rows[-1]
-                    print(f"Last record logged:\n  Timestamp  : {last_row[0]}\n  User Input : {last_row[1]}\n  Intent     : {last_row[2]}\n  Confidence : {last_row[3]}\n  Response   : {last_row[4]}\n  Fallback   : {last_row[5]}\n  Is OOD     : {last_row[6]}")
+                    print(f"Last record logged:\n  Timestamp  : {last_row[0]}\n  User Input : {last_row[1]}\n  Intent     : {last_row[2]}\n  Confidence : {last_row[3]}\n  Entities   : {last_row[4]}\n  Response   : {last_row[5]}\n  Fallback   : {last_row[6]}\n  Is OOD     : {last_row[7]}")
             else:
                 print(f"[FAIL] Header mismatch. Expected: {expected_header}, Got: {header}")
                 sys.exit(1)
