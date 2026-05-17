@@ -10,7 +10,7 @@ from sklearn.metrics import (
     classification_report, 
     confusion_matrix
 )
-from preprocess import clean_text
+from preprocess import preprocess_text
 import config
 
 # --- Configuration ---
@@ -47,7 +47,7 @@ def run_evaluation():
     df['intent'] = df['intent'].replace({'bye': 'goodbye'})
 
     # 3. Clean and Vectorize
-    df['clean_text'] = df['text'].apply(clean_text)
+    df['clean_text'] = df['text'].apply(preprocess_text)
     
     # Split into In-Domain and Out-of-Domain based on strict whitelisted allowed intents
     in_domain_tags = config.ALLOWED_INTENTS - {"fallback"}

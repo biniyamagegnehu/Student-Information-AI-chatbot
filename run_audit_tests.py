@@ -2,7 +2,7 @@ import joblib
 import os
 import sys
 import config
-from preprocess import clean_text
+from preprocess import preprocess_text
 from utils import extract_entities
 
 # Load model and vectorizer
@@ -45,7 +45,7 @@ def run_automated_test_suite():
 
     for query, expected in test_cases:
         # Preprocess
-        clean = clean_text(query)
+        clean = preprocess_text(query)
         vec = vectorizer.transform([clean])
         
         # Predict

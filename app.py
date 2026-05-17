@@ -7,7 +7,7 @@ from datetime import datetime
 
 # Local modular imports
 import config
-from preprocess import clean_text
+from preprocess import preprocess_text
 from responses import get_response
 from memory import ConversationMemory
 from utils import extract_entities, is_ambiguous_query, resolve_context
@@ -201,7 +201,7 @@ class ChatbotEngine:
                 confidence = 0.90 # Standard assumed confidence for contextual match
         else:
             # --- STEP 3: ML PREDICTION FOR NORMAL QUERIES ---
-            processed_query = clean_text(raw_text_clean)
+            processed_query = preprocess_text(raw_text_clean)
 
             if not self.is_loaded:
                 # Untrained fallback trigger

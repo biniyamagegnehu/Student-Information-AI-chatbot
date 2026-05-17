@@ -12,7 +12,7 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 
 # Local modular imports
 import config
-from preprocess import clean_text
+from preprocess import preprocess_text
 
 def validate_and_load_dataset(filepath: str):
     """
@@ -127,7 +127,7 @@ def train_pipeline():
     X_raw = [item[0] for item in raw_dataset]
     y_raw = [item[1] for item in raw_dataset]
 
-    X_clean = [clean_text(text) for text in X_raw]
+    X_clean = [preprocess_text(text) for text in X_raw]
     
     # 3. Label Encoding
     label_encoder = LabelEncoder()
