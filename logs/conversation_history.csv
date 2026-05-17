@@ -1,48 +1,41 @@
-timestamp,user_input,intent,confidence,entities,response,is_fallback
-2026-05-16T14:32:27.962029,hi,greeting,0.9801,None,Hello! How can I help you with campus information today?,False
-2026-05-16T14:32:59.839769,can yo help me about registration,registration,0.6672,None,I'm not quite sure about that. Could you try rephrasing?,True
-2026-05-16T14:33:22.700841,can you help me about registration,registration,0.7254,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",False
-2026-05-16T14:33:56.296186,yes i am asking you about registration,registration,0.7624,None,I'm still learning! Could you ask that in a different way?,False
-2026-05-16T14:34:58.406539,ok when is the registration,registration,0.6746,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
-2026-05-16T14:35:22.283668,tell me about the exam,exam,0.9095,None,I'm still learning! Could you ask that in a different way?,False
-2026-05-16T14:36:47.049125,tell me in what way that you can help me?,contacts,0.3305,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
-2026-05-16T14:52:50.966930,hello,greeting,0.9757,None,Hi there! I'm your Student Assistant. What's on your mind?,False
-2026-05-16T14:53:11.912590,can you help me about registration ?,registration,0.7739,None,I'm not quite sure about that. Could you try rephrasing?,False
-2026-05-16T15:00:16.952409,can you help me,help,0.6745,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
-2026-05-16T15:00:34.898201,tell me about registration,registration,0.5624,None,I'm not quite sure about that. Could you try rephrasing?,True
-2026-05-16T15:03:23.476623,can you help me ?,help,0.6745,None,"I can help you with Information about:
-- Admissions & Registration
-- Course details & Fees
-- Campus Locations & Contacts
-- Exam Schedules & Results
-
-Just ask me something like 'Where is the library?' or 'When are the exams?'",False
-2026-05-16T15:03:42.639075,tell me about registration,registration,0.5624,None,Registration is done online through the Student Portal. Make sure you clear your fees first!,False
-2026-05-16T15:04:32.063724,thak you,bye,0.1197,None,"I don't have enough data on that yet. Are you asking about registration, fees, or locations?",True
-2026-05-16T15:04:44.332126,thank you,thanks,0.9752,None,You're very welcome!,False
-2026-05-16T15:05:05.881473,can yo help me ?,greeting,0.6429,None,Hi there! I'm your Student Assistant. What's on your mind?,False
-2026-05-17 13:06:22,Hello,fallback,0.4971,"I am only trained to answer questions within the university domain (e.g., exams, registration, courses, fees, calendars, locations, scholarships). Please specify a topic within these boundaries.",True
-2026-05-17 13:06:31,How do I register for classes?,registration,0.6722,"To register for classes, log in to the Student Portal, navigate to the 'Registration' tab, select your courses, and click submit before the semester deadline.",False
-2026-05-17 13:06:36,what is the tuition fess?,fallback,0.4024,"I am only trained to answer questions within the university domain (e.g., exams, registration, courses, fees, calendars, locations, scholarships). Please specify a topic within these boundaries.",True
-2026-05-17 13:06:41,where can I see the class scheduel?,fallback,0.3648,"I can only assist with university student services, registration, fees, courses, exams, academic calendars, locations, and scholarships. Let me know how I can help with these areas.",True
-2026-05-17 13:06:46,when is the exam scheduel?,exams,0.7452,"The final exam timetable is published on the student portal six weeks before exams begin. It displays dates, times, and designated exam blocks.",False
-2026-05-17 13:06:52,what is the price of bitcoin?,fallback,0.1678,"I can only assist with university student services, registration, fees, courses, exams, academic calendars, locations, and scholarships. Let me know how I can help with these areas.",True
-2026-05-17 15:58:49,Where is the computer science department?,fallback,0.3631,I'm not fully sure I understood your query. Could you please rephrase it?,True,False,None,low_confidence
-2026-05-17 15:59:24,Where is the computer science department?,fallback,0.3631,I'm not fully sure I understood your query. Could you please rephrase it?,True,False,None,low_confidence
-2026-05-17 16:00:59,Where is the computer science department?,locations,1.0000,"Head over to Block B, Room 201 to find the Computer Science offices.",False,False,None,None
-2026-05-17 16:01:08,when are the exams?,exams,0.5857,"Midterm examinations generally happen during the 8th week of the term, while final examinations are held during the 16th week.",False,False,locations,None
-2026-05-17 16:01:16,what about software engineering?,fallback,0.4663,I'm not fully sure I understood your query. Could you please rephrase it?,True,False,exams,low_confidence
-2026-05-17 16:04:06,when are the exams?,exams,0.5857,"Midterm examinations generally happen during the 8th week of the term, while final examinations are held during the 16th week.",False,False,None,None
-2026-05-17 16:04:13,what about software engineering?,exams,0.9000,Exams for Software Engineering students will run from June 14 - June 16 (Block B Exam Halls).,False,True,exams,None
-2026-05-17 16:04:18,where is it?,locations,0.9000,"You can find the Software Engineering department in Block B, Room 204. If you need to contact them, write to se@university.edu.",False,True,exams,None
-2026-05-17 16:04:28,how much is it?,fees,0.9000,"Semester fees for Software Engineering are $4,700. Late enrollment incurs a $100 for late registration.",False,True,locations,None
-2026-05-17 16:04:33,can you tell me a joke?,fallback,0.2040,I'm not fully sure I understood your query. Could you please rephrase it?,True,False,fees,low_confidence
-2026-05-17 16:05:00,what is the weather at the library?,student_services,1.0000,The Central Library office is situated at Central Plaza Building. Contact them at library@university.edu for inquiries.,False,False,fees,None
-2026-05-17 16:05:12,what is the price of ethereum?,help,0.5454,"I can assist you with student administration topics like semester registration, fee structure, exam timetables, academic calendars, building locations, contact numbers, and scholarships.",False,False,student_services,None
-2026-05-17 16:26:13,when are the exams?,exam,0.7589,"If you miss a final exam due to medical emergencies, submit a makeup exam application with official hospital certificates within 48 hours to Student Affairs.",False,False,None,None
-2026-05-17 16:26:22,what about computer science?,exam,0.9000,Exams for Computer Science students will run from June 10 - June 12 (Block B Exam Halls).,False,True,exam,None
-2026-05-17 16:26:31,where is it?,location,0.9000,"You can find the Computer Science department in Block B, Room 201. If you need to contact them, write to cs@university.edu.",False,True,exam,None
-2026-05-17 16:26:36,how much is it?,fees,0.9000,"Semester fees for Computer Science are $4,500. Late enrollment incurs a $100 for late registration.",False,True,location,None
-2026-05-17 20:49:06,where is the software engineering department,location,1.0000,"[('DEPARTMENT', 'software engineering')]","The Software Engineering department is located in Block C, second floor.",False
-2026-05-17 20:49:06,what time does it open,location,0.9000,"[('DEPARTMENT', 'information technology')]",The Software Engineering department office opens from 8:00 AM to 5:00 PM.,False
-2026-05-17 20:49:10,where is the location,fallback,0.7777,[],"I can help with university buildings, departments, offices, and student services. Which location are you asking about?",True
+timestamp,user_input,intent,confidence,response,is_fallback,is_ood
+2026-05-17 21:02:20,weather in london,fallback,0.0000,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,True
+2026-05-17 21:02:20,bitcoin price,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:20,tell me a joke,fallback,0.0000,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,True
+2026-05-17 21:02:20,football results,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:20,how to cook rice,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:20,latest movie,fallback,0.0000,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,True
+2026-05-17 21:02:20,stock market today,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:20,who won the match,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:26,what is the price of ethereum,fallback,0.3050,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,False
+2026-05-17 21:02:26,best recipe for chocolate cake,fallback,0.2072,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,False
+2026-05-17 21:02:26,tell me a joke about programming,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:26,who is the celebrity in the news today,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:26,show me basketball matches this weekend,fallback,0.0000,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,True
+2026-05-17 21:02:26,let's talk about politics and election,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:26,are you into online dating apps,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:26,how do i hack a university database,fallback,0.3829,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,False
+2026-05-17 21:02:26,python programming tutorial for beginners,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:26,what is the weather like today,fallback,0.0000,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,True
+2026-05-17 21:02:26,what is the price of bitcoin and other crypto,fallback,0.0000,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,True
+2026-05-17 21:02:26,what is your favorite pop music band,fallback,0.0000,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,True
+2026-05-17 21:02:27,registration deadline,fallback,0.6122,"I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",True,False
+2026-05-17 21:02:27,tuition fees,fallback,1.0000,"Could you clarify which service, office, department, or topic you mean?",True,False
+2026-05-17 21:02:27,exam schedule,exam,0.7250,Supplementary examinations for failed modules are scheduled during the summer term. Timetables are sent directly to eligible student portals.,False,False
+2026-05-17 21:02:27,scholarship application,scholarship,1.0000,"The Merit Scholarship offers Up to 50% tuition waiver. Requirements: Minimum cumulative GPA of 3.5 each semester. The deadline is November 15, annually.",False,False
+2026-05-17 21:02:27,where is the library,location,1.0000,The library is located near Block B beside the administration building.,False,False
+2026-05-17 21:02:27,registrar contact,contacts,1.0000,You can contact the Registrar desk at registrar@university.edu (Ext. 104). They operate from 9:00 AM - 5:00 PM (Monday - Friday).,False,False
+2026-05-17 21:02:27,courses in software engineering,courses,0.7312,"If you need help selecting a major or understanding prerequisite requirements, schedule an advising session with your academic advisor on the student portal.",False,False
+2026-05-17 21:02:27,tuition fee payment options,fees,0.7899,Late registration or deferred fee payment requests must be officially submitted and approved by the finance office before the standard payment deadline.,False,False
+2026-05-17 21:02:27,how to register for courses,fallback,0.5640,"I currently support student information topics like registration, examinations, fees, courses, and campus services.",True,False
+2026-05-17 21:02:27,when is the academic calendar starting,schedule,0.7995,"The final deadline to add or drop courses without academic penalty is at the end of the second week of classes, as marked on the calendar.",False,False
+2026-05-17 21:02:27,where can i find block c,schedule,0.9000,"All official academic dates, holiday breaks, exam routines, and registration timelines are finalized by the Senate and published on the university schedule.",False,False
+2026-05-17 21:02:27,finance office telephone number,location,1.0000,"The Finance is situated on the Block A, First Floor, Room 112.",False,False
+2026-05-17 21:02:27,merit scholarship requirements,scholarship,1.0000,"The Merit Scholarship offers Up to 50% tuition waiver. Requirements: Minimum cumulative GPA of 3.5 each semester. The deadline is November 15, annually.",False,False
+2026-05-17 21:02:27,what is the address of the campus library,location,1.0000,The library is located near Block B beside the administration building.,False,False
+2026-05-17 21:02:27,how much does accounting program cost,fees,1.0000,I currently do not have fee examples for the Accounting program.,False,False
+2026-05-17 21:02:27,when do registration periods open,registration,0.7620,Official registration is done in coordination with your academic advisor. Please verify that you have cleared all previous semester finance holds before trying to enroll.,False,False
+2026-05-17 21:02:27,what is the email of student affairs,contacts,1.0000,You can contact the Student Affairs desk at studentaffairs@university.edu. They operate from 8:30 AM - 5:30 PM (Monday - Friday).,False,False
+2026-05-17 21:02:27,final exam routine software engineering,exam,1.0000,The examination schedule for Software Engineering is set for June 14 - June 16 (Block B Exam Halls).,False,False
+2026-05-17 21:02:27,tuition fees per semester,fees,0.7362,Please ensure that your semester tuition fees are paid before the end of the 4th week of the term to avoid billing blocks and late payment penalties.,False,False
+2026-05-17 21:02:27,where is the cafeteria located,fallback,0.5671,"I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",True,False

@@ -19,7 +19,28 @@ CONVERSATION_HISTORY_PATH = os.path.join(LOG_DIR, "conversation_history.csv")
 APP_LOG_PATH = os.path.join(LOG_DIR, "app.log")
 
 # --- ML SETTINGS ---
-CONFIDENCE_THRESHOLD = 0.50
+CONFIDENCE_THRESHOLD = 0.65
+
+# --- safety & ood keywords ---
+OOD_KEYWORDS = [
+    "weather",
+    "football",
+    "bitcoin",
+    "crypto",
+    "joke",
+    "cook",
+    "movie",
+    "celebrity",
+    "stock",
+    "match",
+    "music",
+    "basketball",
+    "politics",
+    "dating",
+    "hacking",
+    "programming"
+]
+
 
 # --- STRICT INTENT WHITELIST ---
 ALLOWED_INTENTS = {

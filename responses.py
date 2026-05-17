@@ -118,6 +118,14 @@ def load_responses(filepath: str = config.INTENTS_JSON_PATH):
 load_responses()
 
 
+# --- STEP 8.6: MULTIPLE FALLBACK RESPONSES ---
+FALLBACK_RESPONSES = [
+    "I can only help with university-related student information such as registration, fees, exams, courses, locations, and scholarships.",
+    "I'm designed specifically for university student support. Please ask about academic services, schedules, tuition, or campus information.",
+    "I currently support student information topics like registration, examinations, fees, courses, and campus services."
+]
+
+
 def normalize_entities(entities) -> dict:
     """
     Normalizes entities from list of tuples or dictionaries into a clean dict
@@ -294,8 +302,18 @@ def get_response(intent: str, entities: dict = None, fallback_reason: str = None
     # 1. Advanced Fallback Handling (Step 9)
     if intent == "fallback":
         reason = fallback_reason if fallback_reason in config.FALLBACK_TYPES else "out_of_domain"
-        selected_response = config.FALLBACK_TYPES[reason]
-        selection_method = f"fallback_{reason}"
+        if reason in ["missing_context", "missing_location"]:
+            selected_response = config.FALLBACK_TYPES[reason]
+            selection_method = f"fallback_{reason}"
+        else:
+            # Randomly select a professional fallback response with repeat prevention (Step 8.6)
+            last_fallback = _LAST_RETURNED.get("fallback")
+            choices = [r for r in FALLBACK_RESPONSES if r != last_fallback]
+            if not choices:
+                choices = FALLBACK_RESPONSES
+            selected_response = random.choice(choices)
+            _LAST_RETURNED["fallback"] = selected_response
+            selection_method = f"fallback_random_{reason}"
 
     # 2. Context-Aware Specialized Follow-up Dispatching (Step 7)
     elif context_used and query and intent in FOLLOW_UP_RESPONSES:

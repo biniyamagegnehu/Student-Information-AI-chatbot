@@ -31,3 +31,61 @@
 2026-05-17 20:49:06,419 - [INFO] - Query: 'where is the software engineering department' | Intent: 'location' (Conf: 1.00) | Entities: [('DEPARTMENT', 'software engineering')] | IsFallback: False
 2026-05-17 20:49:06,439 - [INFO] - Query: 'what time does it open' | Intent: 'location' (Conf: 0.90) | Entities: [('DEPARTMENT', 'information technology')] | IsFallback: False
 2026-05-17 20:49:10,751 - [WARNING] - Query: 'where is the location' | Intent: 'fallback' (Conf: 0.78) | Entities: [] | IsFallback: True
+2026-05-17 21:02:20,886 - [INFO] - Successfully loaded all ML model artifacts.
+2026-05-17 21:02:20,887 - [WARNING] - OOD Event Detected! Input: 'weather in london' | Bypassing classifier.
+2026-05-17 21:02:20,889 - [WARNING] - Query: 'weather in london' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,890 - [WARNING] - OOD Event Detected! Input: 'bitcoin price' | Bypassing classifier.
+2026-05-17 21:02:20,891 - [WARNING] - Query: 'bitcoin price' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,891 - [WARNING] - OOD Event Detected! Input: 'tell me a joke' | Bypassing classifier.
+2026-05-17 21:02:20,892 - [WARNING] - Query: 'tell me a joke' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,893 - [WARNING] - OOD Event Detected! Input: 'football results' | Bypassing classifier.
+2026-05-17 21:02:20,894 - [WARNING] - Query: 'football results' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,894 - [WARNING] - OOD Event Detected! Input: 'how to cook rice' | Bypassing classifier.
+2026-05-17 21:02:20,895 - [WARNING] - Query: 'how to cook rice' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,895 - [WARNING] - OOD Event Detected! Input: 'latest movie' | Bypassing classifier.
+2026-05-17 21:02:20,896 - [WARNING] - Query: 'latest movie' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,897 - [WARNING] - OOD Event Detected! Input: 'stock market today' | Bypassing classifier.
+2026-05-17 21:02:20,898 - [WARNING] - Query: 'stock market today' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:20,898 - [WARNING] - OOD Event Detected! Input: 'who won the match' | Bypassing classifier.
+2026-05-17 21:02:20,899 - [WARNING] - Query: 'who won the match' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,884 - [WARNING] - Query: 'what is the price of ethereum' | Intent: 'fallback' (Conf: 0.30) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:26,925 - [WARNING] - Query: 'best recipe for chocolate cake' | Intent: 'fallback' (Conf: 0.21) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:26,925 - [WARNING] - OOD Event Detected! Input: 'tell me a joke about programming' | Bypassing classifier.
+2026-05-17 21:02:26,926 - [WARNING] - Query: 'tell me a joke about programming' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,927 - [WARNING] - OOD Event Detected! Input: 'who is the celebrity in the news today' | Bypassing classifier.
+2026-05-17 21:02:26,927 - [WARNING] - Query: 'who is the celebrity in the news today' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,928 - [WARNING] - OOD Event Detected! Input: 'show me basketball matches this weekend' | Bypassing classifier.
+2026-05-17 21:02:26,929 - [WARNING] - Query: 'show me basketball matches this weekend' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,929 - [WARNING] - OOD Event Detected! Input: 'let's talk about politics and election' | Bypassing classifier.
+2026-05-17 21:02:26,930 - [WARNING] - Query: 'let's talk about politics and election' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,931 - [WARNING] - OOD Event Detected! Input: 'are you into online dating apps' | Bypassing classifier.
+2026-05-17 21:02:26,932 - [WARNING] - Query: 'are you into online dating apps' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,975 - [WARNING] - Query: 'how do i hack a university database' | Intent: 'fallback' (Conf: 0.38) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:26,975 - [WARNING] - OOD Event Detected! Input: 'python programming tutorial for beginners' | Bypassing classifier.
+2026-05-17 21:02:26,976 - [WARNING] - Query: 'python programming tutorial for beginners' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,977 - [WARNING] - OOD Event Detected! Input: 'what is the weather like today' | Bypassing classifier.
+2026-05-17 21:02:26,978 - [WARNING] - Query: 'what is the weather like today' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,978 - [WARNING] - OOD Event Detected! Input: 'what is the price of bitcoin and other crypto' | Bypassing classifier.
+2026-05-17 21:02:26,979 - [WARNING] - Query: 'what is the price of bitcoin and other crypto' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:26,980 - [WARNING] - OOD Event Detected! Input: 'what is your favorite pop music band' | Bypassing classifier.
+2026-05-17 21:02:26,981 - [WARNING] - Query: 'what is your favorite pop music band' | Intent: 'fallback' (Conf: 0.00) | IsFallback: True | IsOOD: True
+2026-05-17 21:02:27,016 - [WARNING] - Query: 'registration deadline' | Intent: 'fallback' (Conf: 0.61) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:27,029 - [WARNING] - Query: 'tuition fees' | Intent: 'fallback' (Conf: 1.00) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:27,052 - [INFO] - Query: 'exam schedule' | Intent: 'exam' (Conf: 0.72) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,075 - [INFO] - Query: 'scholarship application' | Intent: 'scholarship' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,097 - [INFO] - Query: 'where is the library' | Intent: 'location' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,108 - [INFO] - Query: 'registrar contact' | Intent: 'contacts' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,139 - [INFO] - Query: 'courses in software engineering' | Intent: 'courses' (Conf: 0.73) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,169 - [INFO] - Query: 'tuition fee payment options' | Intent: 'fees' (Conf: 0.79) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,209 - [WARNING] - Query: 'how to register for courses' | Intent: 'fallback' (Conf: 0.56) | IsFallback: True | IsOOD: False
+2026-05-17 21:02:27,280 - [INFO] - Query: 'when is the academic calendar starting' | Intent: 'schedule' (Conf: 0.80) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,308 - [INFO] - Query: 'where can i find block c' | Intent: 'schedule' (Conf: 0.90) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,343 - [INFO] - Query: 'finance office telephone number' | Intent: 'location' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,364 - [INFO] - Query: 'merit scholarship requirements' | Intent: 'scholarship' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,393 - [INFO] - Query: 'what is the address of the campus library' | Intent: 'location' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,417 - [INFO] - Query: 'how much does accounting program cost' | Intent: 'fees' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,449 - [INFO] - Query: 'when do registration periods open' | Intent: 'registration' (Conf: 0.76) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,476 - [INFO] - Query: 'what is the email of student affairs' | Intent: 'contacts' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,498 - [INFO] - Query: 'final exam routine software engineering' | Intent: 'exam' (Conf: 1.00) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,521 - [INFO] - Query: 'tuition fees per semester' | Intent: 'fees' (Conf: 0.74) | IsFallback: False | IsOOD: False
+2026-05-17 21:02:27,558 - [WARNING] - Query: 'where is the cafeteria located' | Intent: 'fallback' (Conf: 0.57) | IsFallback: True | IsOOD: False

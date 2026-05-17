@@ -7,7 +7,7 @@ from datetime import datetime
 
 # Local modular imports
 import config
-from preprocess import preprocess_text
+from preprocess import preprocess_text, detect_ood
 from context_manager import ContextManager
 from responses import get_response
 from ner import extract_entities
@@ -27,9 +27,9 @@ logger = logging.getLogger("ChatbotApp")
 # --- 2. ENHANCED CONVERSATION HISTORY LOG INITIALIZER ---
 def init_history_log():
     """
-    Creates conversation_history.csv with updated fields for Phase 7 auditing.
+    Creates conversation_history.csv with updated fields for Phase 8 auditing.
     """
-    expected_header = ["timestamp", "user_input", "intent", "confidence", "entities", "response", "is_fallback"]
+    expected_header = ["timestamp", "user_input", "intent", "confidence", "response", "is_fallback", "is_ood"]
     file_exists = os.path.exists(config.CONVERSATION_HISTORY_PATH)
     
     needs_init = not file_exists
@@ -53,9 +53,9 @@ def init_history_log():
 
 init_history_log()
 
-def log_interaction(query: str, intent: str, confidence: float, entities_raw: list, response: str, is_fallback: bool):
+def log_interaction(query: str, intent: str, confidence: float, response: str, is_fallback: bool, is_ood: bool = False):
     """
-    Saves a complete conversation interaction transaction with exact Phase 7 fields to CSV and app.log.
+    Saves a complete conversation interaction transaction with exact Phase 8 fields to CSV and app.log.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
@@ -65,7 +65,7 @@ def log_interaction(query: str, intent: str, confidence: float, entities_raw: li
             writer = csv.writer(f)
             writer.writerow([
                 timestamp, query, intent, f"{confidence:.4f}", 
-                str(entities_raw), response, str(is_fallback)
+                response, str(is_fallback), str(is_ood)
             ])
     except Exception as e:
         logger.error(f"Failed to write to conversation history CSV: {e}")
@@ -73,9 +73,9 @@ def log_interaction(query: str, intent: str, confidence: float, entities_raw: li
     # 2. Log to app.log
     log_msg = (
         f"Query: '{query}' | Intent: '{intent}' (Conf: {confidence:.2f}) | "
-        f"Entities: {entities_raw} | IsFallback: {is_fallback}"
+        f"IsFallback: {is_fallback} | IsOOD: {is_ood}"
     )
-    if is_fallback:
+    if is_fallback or is_ood:
         logger.warning(log_msg)
     else:
         logger.info(log_msg)
@@ -117,9 +117,9 @@ class ChatbotEngine:
     def get_reply(self, raw_text: str):
         """
         Processes query: 
-        1. Extract entities
-        2. Detect ambiguous follow-up
-        3. If ambiguous -> Resolve context using Memory
+        1. Preprocess text
+        2. Run OOD detection
+        3. If OOD -> Bypass classifier entirely, trigger fallback response
         4. If normal -> ML Predict
         5. Check Thresholds, Safety Whitelists & Fallback Types
         6. Dynamic Template Dispatch
@@ -128,6 +128,43 @@ class ChatbotEngine:
         raw_text_clean = raw_text.strip()
         if not raw_text_clean:
             return "Please enter a valid message.", "none", 0.0, False
+
+        # --- STEP 0.5: OOD DETECTION (Step 8.4) ---
+        is_ood = detect_ood(raw_text_clean)
+        if is_ood:
+            intent = "fallback"
+            confidence = 0.0
+            fallback_triggered = True
+            fallback_reason = "out_of_domain"
+            
+            # Generate the professional fallback response (Step 8.6)
+            response = get_response(
+                intent, 
+                entities={}, 
+                fallback_reason=fallback_reason, 
+                query=raw_text_clean, 
+                context_used=False,
+                debug=True
+            )
+            
+            # Log OOD warning (Step 8.7)
+            logger.warning(f"OOD Event Detected! Input: '{raw_text_clean}' | Bypassing classifier.")
+            
+            # Log to CSV (Step 8.7)
+            log_interaction(
+                raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=True
+            )
+            
+            # Print debug info (Step 8.8)
+            print("\n==================================================")
+            print("[DEBUG]")
+            print(f"Input: {raw_text_clean}")
+            print(f"OOD Detected: {is_ood}")
+            print("Classifier Skipped: True")
+            print("Fallback Triggered: True")
+            print("==================================================\n")
+            
+            return response, intent, confidence, fallback_triggered
 
         # --- SESSION MEMORY VIEW ---
         memory_state = self.memory.get_state()
@@ -330,7 +367,7 @@ class ChatbotEngine:
 
         # --- STEP 7: LOG INTERACTION ---
         log_interaction(
-            raw_text_clean, intent, confidence, extracted_entities_raw, response, fallback_triggered
+            raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=False
         )
 
         # Print detected entities in debug logs format (Step 7.2)

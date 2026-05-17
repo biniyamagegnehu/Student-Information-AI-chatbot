@@ -8,7 +8,7 @@ queries before feature extraction (TF-IDF) and machine learning inference.
 It provides advanced typo correction, slang normalization, repeated letter collapse,
 and stopword preservation for critical educational keywords.
 """
-
+import config
 import re
 import string
 import nltk
@@ -253,3 +253,35 @@ def clean_text(text: str) -> str:
     with external calling modules.
     """
     return preprocess_text(text, debug=False)
+
+
+def detect_ood(text: str) -> bool:
+    """
+    Step 8.3: Detects if the user query is out-of-domain (OOD).
+    Converts query to lowercase, checks for matches against config.OOD_KEYWORDS, 
+    and returns True if any match is found, otherwise False.
+    """
+    if not text:
+        return False
+    
+    # 1. Lowercase input
+    lower_text = text.lower()
+    
+    # 2. Clean input punctuation to get clean words
+    clean_text = re.sub(r"[^\w\s]", "", lower_text)
+    words = clean_text.split()
+    
+    for kw in config.OOD_KEYWORDS:
+        kw_clean = kw.lower()
+        if " " in kw_clean:
+            if kw_clean in lower_text:
+                return True
+        else:
+            # Check for word boundaries or simple substring inclusions (e.g. 'cook' matches 'cooking')
+            if kw_clean in words:
+                return True
+            if any(kw_clean in w for w in words):
+                return True
+                
+    return False
+
