@@ -1,79 +1,71 @@
---- HUMAN EVALUATION FAILURE AUDIT [2026-05-17 16:39:16.571539] ---
-Total Misclassifications: 19
+--- HUMAN EVALUATION FAILURE AUDIT [2026-05-17 16:48:22.316862] ---
+Total Misclassifications: 17
 
-INPUT: late registration fee?
-EXPECTED: registration
-PREDICTED: fees (Conf: 0.48)
-------------------------------
 INPUT: can i add a course now?
 EXPECTED: registration
-PREDICTED: courses (Conf: 0.68)
+PREDICTED: courses (Conf: 0.76)
 ------------------------------
 INPUT: how to drop a module?
 EXPECTED: registration
-PREDICTED: courses (Conf: 0.42)
+PREDICTED: courses (Conf: 0.50)
 ------------------------------
 INPUT: subjects in pharmacy?
 EXPECTED: courses
-PREDICTED: goodbye (Conf: 0.13)
+PREDICTED: contacts (Conf: 0.16)
 ------------------------------
 INPUT: class timings for extension program
 EXPECTED: schedule
-PREDICTED: courses (Conf: 0.58)
+PREDICTED: courses (Conf: 0.59)
 ------------------------------
 INPUT: is there class tomorrow?
 EXPECTED: schedule
-PREDICTED: registration (Conf: 0.38)
+PREDICTED: courses (Conf: 0.32)
 ------------------------------
 INPUT: timetable for computer science
 EXPECTED: schedule
-PREDICTED: exam (Conf: 0.39)
+PREDICTED: exam (Conf: 0.42)
 ------------------------------
 INPUT: what time does the lecture start?
 EXPECTED: schedule
-PREDICTED: exam (Conf: 0.46)
+PREDICTED: exam (Conf: 0.45)
 ------------------------------
 INPUT: how to get a student loan?
 EXPECTED: scholarship
-PREDICTED: student_services (Conf: 0.39)
+PREDICTED: student_services (Conf: 0.49)
 ------------------------------
 INPUT: fee waiver for disabled students
 EXPECTED: scholarship
-PREDICTED: fees (Conf: 0.50)
+PREDICTED: fees (Conf: 0.32)
 ------------------------------
 INPUT: stipend for international students
 EXPECTED: scholarship
-PREDICTED: student_services (Conf: 0.67)
-------------------------------
-INPUT: sponsorship opportunities?
-EXPECTED: scholarship
-PREDICTED: goodbye (Conf: 0.13)
+PREDICTED: student_services (Conf: 0.52)
 ------------------------------
 INPUT: is the toilet nearby?
 EXPECTED: location
-PREDICTED: goodbye (Conf: 0.13)
+PREDICTED: goodbye (Conf: 0.15)
 ------------------------------
 INPUT: help desk telegram link
 EXPECTED: contacts
-PREDICTED: help (Conf: 0.31)
+PREDICTED: help (Conf: 0.24)
 ------------------------------
 INPUT: registrar office hours
 EXPECTED: contacts
-PREDICTED: location (Conf: 0.49)
+PREDICTED: location (Conf: 0.39)
 ------------------------------
 INPUT: selam
 EXPECTED: greeting
-PREDICTED: goodbye (Conf: 0.13)
+PREDICTED: student_services (Conf: 0.19)
 ------------------------------
 INPUT: you are a lifesaver
 EXPECTED: thanks
-PREDICTED: goodbye (Conf: 0.13)
+PREDICTED: goodbye (Conf: 0.23)
 ------------------------------
 INPUT: great job bot
 EXPECTED: thanks
-PREDICTED: goodbye (Conf: 0.52)
+PREDICTED: goodbye (Conf: 0.51)
 ------------------------------
 INPUT: take care
 EXPECTED: goodbye
-PREDICTED: courses (Conf: 0.27)
+PREDICTED: exam (Conf: 0.29)
 ------------------------------
