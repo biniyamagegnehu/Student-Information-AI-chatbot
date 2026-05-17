@@ -24,10 +24,12 @@ except LookupError:
 
 # Initialize NLP Utilities
 lemmatizer = WordNetLemmatizer()
-stop_words = set(stopwords.words('english'))
+# Keep key interrogative terms to preserve question dimensions (spatial, time, manner) in TF-IDF
+stop_words = set(stopwords.words('english')) - {"where", "when", "how", "what", "which", "who", "why"}
 
-# --- TYPO NORMALIZATION DICTIONARY ---
+# --- TYPO & SLANG NORMALIZATION DICTIONARY ---
 TYPO_DICTIONARY = {
+    # Typos
     "regstration": "registration",
     "registraion": "registration",
     "regestration": "registration",
@@ -45,8 +47,21 @@ TYPO_DICTIONARY = {
     "locaton": "location",
     "contat": "contact",
     "contcts": "contacts",
-    "admision": "admission", # While admission is disallowed, keep correction clean
-    "fee": "fees"
+    "admision": "admission",
+    "fee": "fees",
+    # Abbreviations & Slang (Phase 2)
+    "u": "you",
+    "pls": "please",
+    "plz": "please",
+    "dept": "department",
+    "scholar": "scholarship",
+    "reg": "registration",
+    "info": "information",
+    "cs": "computer science",
+    "se": "software engineering",
+    "mech": "mechanical engineering",
+    "bus": "business administration",
+    "admin": "administration"
 }
 
 def clean_text(text: str) -> str:

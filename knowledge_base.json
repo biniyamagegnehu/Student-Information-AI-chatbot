@@ -1,0 +1,126 @@
+{
+  "departments": {
+    "computer science": {
+      "location": "Block B, Room 201",
+      "contact": "cs@university.edu",
+      "description": "Offering undergraduate and graduate degrees in computer science and data science."
+    },
+    "software engineering": {
+      "location": "Block B, Room 204",
+      "contact": "se@university.edu",
+      "description": "Providing focus on software architecture, design, and software engineering methodologies."
+    },
+    "mechanical engineering": {
+      "location": "Block D, Room 102",
+      "contact": "mech@university.edu",
+      "description": "Studies in solid mechanics, thermodynamics, fluid dynamics, and manufacturing."
+    },
+    "business administration": {
+      "location": "Block C, Room 310",
+      "contact": "business@university.edu",
+      "description": "Undergraduate programs in finance, marketing, management, and business analytics."
+    }
+  },
+  "offices": {
+    "registrar": {
+      "location": "Block A, Ground Floor",
+      "contact": "registrar@university.edu (Ext. 104)",
+      "hours": "9:00 AM - 5:00 PM (Monday - Friday)",
+      "description": "Handles transcripts, course registrations, and graduation audits."
+    },
+    "finance": {
+      "location": "Block A, First Floor, Room 112",
+      "contact": "finance@university.edu (Ext. 108)",
+      "hours": "9:00 AM - 4:30 PM (Monday - Friday)",
+      "description": "Responsible for student billings, fee structures, and semester payments."
+    },
+    "student affairs": {
+      "location": "Block C, Room 105",
+      "contact": "studentaffairs@university.edu",
+      "hours": "8:30 AM - 5:30 PM (Monday - Friday)",
+      "description": "Manages campus clubs, events, and student welfare services."
+    },
+    "it helpdesk": {
+      "location": "Central Library, Ground Floor",
+      "contact": "support@university.edu (Ext. 404)",
+      "hours": "8:00 AM - 8:00 PM (Everyday)",
+      "description": "Assists with portal logins, wifi access, and email credentials."
+    }
+  },
+  "fees": {
+    "computer science": {
+      "per_semester": "$4,500",
+      "per_year": "$9,000",
+      "fine_rate": "$100 for late registration"
+    },
+    "software engineering": {
+      "per_semester": "$4,700",
+      "per_year": "$9,400",
+      "fine_rate": "$100 for late registration"
+    },
+    "mechanical engineering": {
+      "per_semester": "$4,800",
+      "per_year": "$9,600",
+      "fine_rate": "$120 for late registration"
+    },
+    "business administration": {
+      "per_semester": "$4,000",
+      "per_year": "$8,000",
+      "fine_rate": "$80 for late registration"
+    }
+  },
+  "exam_schedule": {
+    "computer science": "June 10 - June 12 (Block B Exam Halls)",
+    "software engineering": "June 14 - June 16 (Block B Exam Halls)",
+    "mechanical engineering": "June 11 - June 13 (Block D Workshop)",
+    "business administration": "June 18 - June 20 (Main Auditorium Hall)"
+  },
+  "academic_calendar": {
+    "fall_semester": {
+      "start_date": "September 7, 2026",
+      "end_date": "December 18, 2026",
+      "midterm_week": "October 26 - October 30, 2026",
+      "registration_deadline": "August 28, 2026"
+    },
+    "spring_semester": {
+      "start_date": "January 11, 2027",
+      "end_date": "May 14, 2027",
+      "midterm_week": "March 8 - March 12, 2027",
+      "registration_deadline": "December 28, 2026"
+    }
+  },
+  "scholarships": {
+    "merit scholarship": {
+      "coverage": "Up to 50% tuition waiver",
+      "requirements": "Minimum cumulative GPA of 3.5 each semester",
+      "deadline": "November 15, annually"
+    },
+    "need scholarship": {
+      "coverage": "Varying assistance from 20% to 80% tuition waiver",
+      "requirements": "Household annual income documentation and interview",
+      "deadline": "September 15, annually"
+    },
+    "sports scholarship": {
+      "coverage": "Up to 30% tuition waiver",
+      "requirements": "Active participation in university varsity team and GPA of 2.5+",
+      "deadline": "September 30, annually"
+    }
+  },
+  "student_services": {
+    "counseling": {
+      "location": "Block C, Room 205",
+      "contact": "counseling@university.edu",
+      "description": "Providing confidential personal and academic mental health support."
+    },
+    "career helpdesk": {
+      "location": "Block C, Ground Floor",
+      "contact": "careers@university.edu",
+      "description": "Assisting with resume reviews, internship placements, and mock interview preparations."
+    },
+    "central library": {
+      "location": "Central Plaza Building",
+      "contact": "library@university.edu",
+      "description": "Access to 50,000+ reference books, study areas, and online academic databases."
+    }
+  }
+}

@@ -10,6 +10,7 @@ MODEL_DIR = os.path.join(BASE_DIR, "model")
 LOG_DIR = os.path.join(BASE_DIR, "logs")
 
 INTENTS_JSON_PATH = os.path.join(BASE_DIR, "intents.json")
+KNOWLEDGE_BASE_PATH = os.path.join(BASE_DIR, "knowledge_base.json")
 MODEL_PATH = os.path.join(MODEL_DIR, "model.pkl")
 VECTORIZER_PATH = os.path.join(MODEL_DIR, "vectorizer.pkl")
 LABEL_ENCODER_PATH = os.path.join(MODEL_DIR, "label_encoder.pkl")
@@ -43,3 +44,11 @@ FALLBACK_RESPONSES = [
     "I can only assist with university student services, registration, fees, courses, exams, academic calendars, locations, and scholarships. Let me know how I can help with these areas.",
     "I am only trained to answer questions within the university domain (e.g., exams, registration, courses, fees, calendars, locations, scholarships). Please specify a topic within these boundaries."
 ]
+
+# --- ADVANCED FALLBACK TYPES ---
+FALLBACK_TYPES = {
+    "out_of_domain": "I can only assist with university student information such as registration, courses, fees, exams, calendars, locations, and scholarships.",
+    "missing_context": "Could you clarify which service, office, department, or topic you mean?",
+    "low_confidence": "I'm not fully sure I understood your query. Could you please rephrase it?"
+}
+
