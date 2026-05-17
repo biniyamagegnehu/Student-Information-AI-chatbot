@@ -8,9 +8,9 @@ from datetime import datetime
 # Local modular imports
 import config
 from preprocess import preprocess_text
+from context_manager import ContextManager
 from responses import get_response
-from memory import ConversationMemory
-from utils import extract_entities, is_ambiguous_query, resolve_context
+from utils import extract_entities
 
 # --- AUTOMATIC LOGGING DIRECTORY SETUP ---
 if not os.path.exists(config.LOG_DIR):
@@ -83,7 +83,7 @@ class ChatbotEngine:
         self.is_loaded = False
         
         # Instantiate in-session memory tracking
-        self.memory = ConversationMemory()
+        self.memory = ContextManager()
         
         self.load_artifacts()
 
@@ -184,21 +184,22 @@ class ChatbotEngine:
                     heuristics_matched = True
 
         # --- STEP 2: CONTEXT RESOLUTION & FOLLOW-UP HANDLING ---
+        is_followup = self.memory.is_followup_query(raw_text_clean)
+        
         if heuristics_matched:
             pass
-        elif is_ambiguous_query(raw_text_clean):
-            # Resolve intent/topic based on context
-            inferred_intent, inferred_topic, resolved_entities = resolve_context(raw_text_clean, memory_state)
+        elif is_followup:
+            inferred_intent, inferred_topic, resolved_entities, context_resolved = self.memory.resolve_context(raw_text_clean)
             
-            if inferred_intent == "fallback" and inferred_topic == "missing_context":
-                fallback_reason = "missing_context"
-                fallback_triggered = True
-            else:
+            if context_resolved:
                 intent = inferred_intent
-                # Merge entities
                 extracted_entities.update(resolved_entities)
                 context_used = True
-                confidence = 0.90 # Standard assumed confidence for contextual match
+                confidence = 0.90
+            else:
+                intent = "fallback"
+                fallback_reason = "missing_context"
+                fallback_triggered = True
         else:
             # --- STEP 3: ML PREDICTION FOR NORMAL QUERIES ---
             processed_query = preprocess_text(raw_text_clean)
@@ -251,6 +252,18 @@ class ChatbotEngine:
             if not fallback_reason:
                 fallback_reason = "out_of_domain"
             fallback_triggered = True
+
+        # --- STEP 4.5: CONTEXT DEBUG LOGGING (Step 13) ---
+        if context_used or is_followup:
+            print("\n" + "-" * 40)
+            print(" [CONTEXT DEBUG] MULTI-TURN DIALOGUE FLOW")
+            print("-" * 40)
+            print(f" Original Query     : {raw_text_clean}")
+            print(f" Detected Follow-Up : {is_followup}")
+            print(f" Previous Intent    : {prev_intent}")
+            print(f" Resolved Intent    : {intent}")
+            print(f" Topic Active       : {intent}")
+            print("-" * 40 + "\n")
 
         # --- STEP 5: RESPONSE DISPATCHING ---
         response = get_response(
