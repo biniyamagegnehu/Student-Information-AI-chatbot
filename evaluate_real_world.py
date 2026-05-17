@@ -10,11 +10,13 @@ from sklearn.metrics import (
     classification_report, 
     confusion_matrix
 )
-from preprocess import preprocess_text
+from preprocess import clean_text
+import config
 
 # --- Configuration ---
 MODEL_PATH = "model/model.pkl"
 VEC_PATH = "model/vectorizer.pkl"
+LE_PATH = "model/label_encoder.pkl"
 HUMAN_TEST_FILE = "dataset/human_test.csv"
 FAILURE_LOG = "logs/failures.txt"
 
@@ -24,12 +26,13 @@ def run_evaluation():
     print("="*60)
 
     # 1. Load Assets
-    if not os.path.exists(MODEL_PATH) or not os.path.exists(VEC_PATH):
+    if not os.path.exists(MODEL_PATH) or not os.path.exists(VEC_PATH) or not os.path.exists(LE_PATH):
         print(" CRITICAL ERROR: Model files missing. Run train.py first.")
         return
 
     model = joblib.load(MODEL_PATH)
     vectorizer = joblib.load(VEC_PATH)
+    label_encoder = joblib.load(LE_PATH)
     print(" Model Artifacts Loaded.")
 
     # 2. Load and Prepare Test Data
@@ -40,12 +43,16 @@ def run_evaluation():
     df = pd.read_csv(HUMAN_TEST_FILE)
     print(f" Balanced Human Test Set Loaded ({len(df)} samples).")
 
+    # Map 'bye' in CSV to 'goodbye' to align renamed tags
+    df['intent'] = df['intent'].replace({'bye': 'goodbye'})
+
     # 3. Clean and Vectorize
-    df['clean_text'] = df['text'].apply(preprocess_text)
+    df['clean_text'] = df['text'].apply(clean_text)
     
-    # Split into In-Domain and Out-of-Domain
-    in_domain = df[df['intent'] != 'unknown'].copy()
-    out_of_domain = df[df['intent'] == 'unknown'].copy()
+    # Split into In-Domain and Out-of-Domain based on strict whitelisted allowed intents
+    in_domain_tags = config.ALLOWED_INTENTS - {"fallback"}
+    in_domain = df[df['intent'].isin(in_domain_tags)].copy()
+    out_of_domain = df[~df['intent'].isin(in_domain_tags)].copy()
 
     # 4. Predict In-Domain Performance
     X_test_vec = vectorizer.transform(in_domain['clean_text'])
@@ -53,7 +60,8 @@ def run_evaluation():
     
     # Get probabilities for confidence auditing
     probs_all = model.predict_proba(X_test_vec)
-    y_pred = model.classes_[np.argmax(probs_all, axis=1)]
+    pred_indices = np.argmax(probs_all, axis=1)
+    y_pred = label_encoder.inverse_transform(pred_indices)
     max_probs = np.max(probs_all, axis=1)
 
     # --- METRICS CALCULATION ---
@@ -93,7 +101,8 @@ def run_evaluation():
         ood_vec = vectorizer.transform(out_of_domain['clean_text'])
         ood_probs = model.predict_proba(ood_vec)
         ood_max_probs = np.max(ood_probs, axis=1)
-        ood_preds = model.classes_[np.argmax(ood_probs, axis=1)]
+        ood_pred_indices = np.argmax(ood_probs, axis=1)
+        ood_preds = label_encoder.inverse_transform(ood_pred_indices)
         
         # A good model should have LOW confidence for nonsense
         THRESHOLD = 0.60
