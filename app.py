@@ -253,7 +253,14 @@ class ChatbotEngine:
             fallback_triggered = True
 
         # --- STEP 5: RESPONSE DISPATCHING ---
-        response = get_response(intent, extracted_entities, fallback_reason)
+        response = get_response(
+            intent, 
+            extracted_entities, 
+            fallback_reason, 
+            query=raw_text_clean, 
+            context_used=context_used,
+            debug=True
+        )
 
         # --- STEP 6: CONVERSATION MEMORY UPDATE ---
         # We don't save greeting, goodbye, thanks or fallbacks as active follow-up topics to prevent context pollution
