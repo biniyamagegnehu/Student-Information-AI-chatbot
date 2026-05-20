@@ -128,8 +128,8 @@ class ChatbotEngine:
             if k_upper == "SERVICE":
                 if v == "scholarship":
                     extracted_entities["scholarship"] = "merit scholarship"
-                if v == "student services":
-                    extracted_entities["student_services"] = "central library"
+                if v in ["student services", "counseling", "career helpdesk", "central library", "health center"]:
+                    extracted_entities["student_services"] = v
 
         # --- VARIABLES INITIALIZATION ---
         intent = "fallback"
@@ -237,7 +237,7 @@ class ChatbotEngine:
                     predicted_intent = self.label_encoder.inverse_transform([max_index])[0]
                     
                     # Confidence Guardrail — uses Phase 7 uppercase keys + legacy lowercase keys
-                    effective_threshold = config.CONFIDENCE_THRESHOLD
+                    effective_threshold = config.INTENT_THRESHOLDS.get(predicted_intent, config.CONFIDENCE_THRESHOLD)
                     if extracted_entities:
                         # Lower the required threshold if we have extracted a matching domain entity
                         if predicted_intent == "location" and any(k in extracted_entities for k in [

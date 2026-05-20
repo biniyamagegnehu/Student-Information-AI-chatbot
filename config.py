@@ -21,6 +21,24 @@ APP_LOG_PATH = os.path.join(LOG_DIR, "app.log")
 # --- ML SETTINGS ---
 CONFIDENCE_THRESHOLD = 0.65
 
+INTENT_THRESHOLDS = {
+    "greeting": 0.35,
+    "goodbye": 0.35,
+    "thanks": 0.35,
+    "help": 0.35,
+    "registration": 0.60,
+    "courses": 0.55,
+    "fees": 0.60,
+    "exam": 0.60,
+    "schedule": 0.55,
+    "location": 0.60,
+    "contacts": 0.55,
+    "scholarship": 0.60,
+    "student_services": 0.55
+}
+
+CHATBOT_DEBUG = False
+
 # --- safety & ood keywords ---
 OOD_KEYWORDS = [
     "weather",

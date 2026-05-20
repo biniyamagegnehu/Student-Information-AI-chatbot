@@ -365,7 +365,7 @@ def get_response(intent: str, entities: dict = None, fallback_reason: str = None
                 selection_method = "dynamic_rotated_response"
 
     # 5. Debug Audit Logging (Step 13)
-    if debug or os.environ.get("CHATBOT_DEBUG") == "True":
+    if debug or getattr(config, "CHATBOT_DEBUG", False) or os.environ.get("CHATBOT_DEBUG") == "True":
         print("\n" + "-" * 40)
         print(" [DEBUG] RESPONSE ENGINE SELECTION LOG")
         print("-" * 40)

@@ -37,14 +37,19 @@ ENTITY_TEMPLATES = {
         "registrar office": ["registrar office", "registrar", "registrars office", "registration office"],
         "finance office": ["finance office", "finance", "finances office", "fees office", "cashier office", "accounts office"],
         "student affairs": ["student affairs", "student affairs office", "student affairs desk", "affairs office"],
-        "scholarship office": ["scholarship office", "scholarship desk", "scholarships office", "financial aid office"]
+        "scholarship office": ["scholarship office", "scholarship desk", "scholarships office", "financial aid office"],
+        "administration office": ["administration office", "admin office", "administration", "admin", "admin building", "admin office location"]
     },
     "SERVICE": {
         "registration": ["registration", "register", "enrollment", "enroll"],
         "exam": ["exam", "exams", "examination", "examinations", "test", "tests"],
         "fees": ["fees", "fee", "tuition", "tuition fees", "payment", "payments"],
         "scholarship": ["scholarship", "scholarships", "financial aid"],
-        "student services": ["student services", "student service", "counseling", "career helpdesk"]
+        "student services": ["student services", "student service", "student support"],
+        "counseling": ["counseling", "counselling", "therapy", "mental health"],
+        "career helpdesk": ["career helpdesk", "career services", "career center", "career advice"],
+        "central library": ["central library", "library", "libraries"],
+        "health center": ["health center", "clinic", "student clinic", "medical center", "hospital"]
     },
     "DATE": {
         "today": ["today"],
@@ -139,6 +144,11 @@ def extract_entities(text: str) -> list:
                             similarity = avg_sim
 
                     if similarity >= 0.8:
+                        # IT capitalization check to avoid matching the pronoun "it"
+                        if category == "DEPARTMENT" and standard_val == "information technology" and alias_clean == "it":
+                            if not re.search(r'\bIT\b|\bI\.T\.\b', text):
+                                continue
+
                         candidates.append({
                             "category": category,
                             "value": standard_val,
