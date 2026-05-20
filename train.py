@@ -173,7 +173,15 @@ def train_classification_pipeline():
         os.makedirs(config.MODEL_DIR)
     joblib.dump(label_encoder, config.LABEL_ENCODER_PATH)
 
-    # 4. Advanced Hybrid TF-IDF Vectorization & Feature Engineering (Step 5 & 6)
+    # 4. Stratified Train/Test Split BEFORE Vectorization
+    X_train_text, X_test_text, y_train, y_test = train_test_split(
+        X_clean, y_encoded,
+        test_size=0.20,
+        stratify=y_encoded,
+        random_state=config.RANDOM_SEED
+    )
+
+    # 5. Advanced Hybrid TF-IDF Vectorization & Feature Engineering (Step 5 & 6)
     print("[INFO] Engineering Hybrid Feature Pipeline (Word-Level + Char-Level TF-IDF)...")
     
     word_vectorizer = TfidfVectorizer(
@@ -196,17 +204,12 @@ def train_classification_pipeline():
         ('char_tfidf', char_vectorizer)
     ])
     
-    X_features = hybrid_feature_pipeline.fit_transform(X_clean)
-    feature_count = X_features.shape[1]
+    # Fit vectorizer ONLY on training data to prevent data leakage
+    X_train = hybrid_feature_pipeline.fit_transform(X_train_text)
+    X_test = hybrid_feature_pipeline.transform(X_test_text)
+    
+    feature_count = X_train.shape[1]
     print(f"[OK] Successfully engineered {feature_count} hybrid feature matrices.")
-
-    # 5. Stratified Train/Test Split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_features, y_encoded,
-        test_size=0.20,
-        stratify=y_encoded,
-        random_state=config.RANDOM_SEED
-    )
 
     # 6. Classifier Training (Step 7)
     # Balanced, regularized Logistic Regression classifier optimized for small NLP vocabularies
@@ -325,7 +328,8 @@ def train_classification_pipeline():
             f.write("--- HYBRID FEATURE STATISTICS ---\n")
             f.write(f"Total Combined Engineered Features: {feature_count}\n")
             f.write(" - Word-Level TF-IDF (Unigrams, Bigrams, Sublinear TF)\n")
-            f.write(" - Character-Level TF-IDF (3-5 Ngrams, Sublinear TF)\n\n")
+            f.write(" - Character-Level TF-IDF (3-5 Ngrams, Sublinear TF)\n")
+            f.write(" - *NOTE: Vectorizer was strictly fitted ONLY on the training dataset to prevent data leakage.*\n\n")
             
             f.write("--- MODEL PERFORMANCE METRICS ---\n")
             f.write(f"Train Accuracy: {train_accuracy * 100:.2f}%\n")
