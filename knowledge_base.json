@@ -45,6 +45,12 @@
       "contact": "support@university.edu (Ext. 404)",
       "hours": "8:00 AM - 8:00 PM (Everyday)",
       "description": "Assists with portal logins, wifi access, and email credentials."
+    },
+    "admin office": {
+      "location": "Block A, Main Wing",
+      "contact": "admin@university.edu (Ext. 100)",
+      "hours": "8:30 AM - 5:30 PM (Monday - Friday)",
+      "description": "Handles overall university administration and campus policies."
     }
   },
   "fees": {
@@ -121,6 +127,24 @@
       "location": "Central Plaza Building",
       "contact": "library@university.edu",
       "description": "Access to 50,000+ reference books, study areas, and online academic databases."
+    },
+    "health center": {
+      "location": "Block E, Ground Floor",
+      "contact": "clinic@university.edu (Ext. 500)",
+      "description": "Provides first aid, general checkups, and emergency medical assistance."
+    },
+    "student support office": {
+      "location": "Block C, Room 102",
+      "contact": "support.desk@university.edu",
+      "description": "General assistance for student life, housing, and general inquiries."
     }
+  },
+  "registration_details": {
+    "course add/drop": "The course add/drop period strictly ends on the second Friday of the semester.",
+    "registration deadline": "The standard registration deadline is one week before the semester starts. Late registration incurs a penalty."
+  },
+  "schedule_details": {
+    "class timetable": "Class timetables are finalized and published on the student portal two weeks before the semester starts.",
+    "semester start/end": "The Fall semester starts in September and ends in December. The Spring semester starts in January and ends in May."
   }
 }
