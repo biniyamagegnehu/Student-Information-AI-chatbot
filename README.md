@@ -35,6 +35,9 @@ source .venv/bin/activate  # Or .venv\Scripts\activate on Windows
 
 # Install dependencies
 pip install -r requirements.txt
+
+# (Optional) Download required NLTK resources for tokenization & lemmatization:
+python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet'); nltk.download('punkt')"
 ```
 
 ## Usage

@@ -156,18 +156,48 @@ def generate_entity_response(intent: str, entities: dict, query: str = None) -> 
     if not kb:
         return None
 
-    # Check if the query asks about opening times/hours for departments/offices (Step 7.4)
     if query:
         q_lower = query.lower()
+        
+        # --- SPECIFIC KB DIRECT ANSWERS ---
+        if intent == "registration":
+            if any(w in q_lower for w in ["add", "drop"]):
+                ans = kb.get("registration_details", {}).get("course add/drop")
+                if ans: return ans
+            if any(w in q_lower for w in ["late", "deadline"]):
+                ans = kb.get("registration_details", {}).get("registration deadline")
+                if ans: return ans
+                
+        if intent == "schedule":
+            if any(w in q_lower for w in ["timetable", "class", "classes"]):
+                ans = kb.get("schedule_details", {}).get("class timetable")
+                if ans: return ans
+            if any(w in q_lower for w in ["start", "end", "semester", "term"]):
+                ans = kb.get("schedule_details", {}).get("semester start/end")
+                if ans: return ans
+        
+        # Handle cases where NER might miss specific services
+        if intent == "student_services" or intent == "location":
+            if "student support office" in q_lower:
+                data = kb.get("student_services", {}).get("student support office")
+                if data: return f"The Student Support Office is located in {data['location']}. Contact: {data['contact']}."
+            if "health center" in q_lower:
+                data = kb.get("student_services", {}).get("health center")
+                if data: return f"The Health Center is located in {data['location']}. Contact: {data['contact']}."
+
+        # Check if the query asks about opening times/hours for departments/offices (Step 7.4)
         if any(w in q_lower for w in ["open", "time", "hours", "when does it"]):
             if "DEPARTMENT" in entities:
                 dept = entities["DEPARTMENT"].lower()
                 if dept == "software engineering":
                     return "The Software Engineering department office opens from 8:00 AM to 5:00 PM."
                 return f"The {dept.title()} department office opens from 8:00 AM to 5:00 PM."
-            elif "OFFICE" in entities:
-                off = entities["OFFICE"].lower()
-                if off in ["registrar", "registrar office"]:
+            elif "OFFICE" in entities or "registrar" in q_lower:
+                off = entities.get("OFFICE", "").lower()
+                if off in ["registrar", "registrar office"] or "registrar" in q_lower:
+                    data = kb.get("offices", {}).get("registrar")
+                    if data and "hours" in data:
+                        return f"The Registrar Office hours are: {data['hours']}."
                     return "The Registrar Office is open from 9:00 AM to 5:00 PM (Monday - Friday)."
                 return f"The {off.title()} office is open from 9:00 AM to 5:00 PM."
 

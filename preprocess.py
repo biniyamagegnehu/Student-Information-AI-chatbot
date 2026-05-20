@@ -16,24 +16,31 @@ from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 
-# --- NLTK SAFE DOWNLOAD SYSTEM ---
+# --- NLTK SAFE RESOURCE DETECTION SYSTEM ---
+# Avoid automatic internet downloads during application startup which causes hangs.
 try:
     nltk.data.find('corpora/stopwords')
+    stopwords_loaded = True
 except LookupError:
-    nltk.download('stopwords', quiet=True)
+    stopwords_loaded = False
 
 try:
     nltk.data.find('corpora/wordnet')
+    wordnet_loaded = True
 except LookupError:
-    nltk.download('wordnet', quiet=True)
+    wordnet_loaded = False
 
 try:
     nltk.data.find('tokenizers/punkt')
+    punkt_loaded = True
 except LookupError:
-    nltk.download('punkt', quiet=True)
+    punkt_loaded = False
 
-# Initialize NLP Utilities
-lemmatizer = WordNetLemmatizer()
+# Initialize NLP Utilities with fallback support
+if wordnet_loaded:
+    lemmatizer = WordNetLemmatizer()
+else:
+    lemmatizer = None
 
 # --- PRESERVED STOPWORDS ---
 # We keep question markers (how, when, where) and core educational terms.
@@ -45,7 +52,10 @@ PRESERVED_KEYWORDS = {
     "services", "service", "scholarship", "scholarships", "schedule", "schedules"
 }
 try:
-    BASE_STOPWORDS = set(stopwords.words('english'))
+    if stopwords_loaded:
+        BASE_STOPWORDS = set(stopwords.words('english'))
+    else:
+        BASE_STOPWORDS = set()
 except Exception:
     BASE_STOPWORDS = set()
 
@@ -224,7 +234,10 @@ def preprocess_text(text: str, debug: bool = False) -> str:
 
     # Stage 7: Token cleanup (Tokenization & Stopword removal)
     try:
-        tokens = word_tokenize(processed)
+        if punkt_loaded:
+            tokens = word_tokenize(processed)
+        else:
+            tokens = processed.split()
     except Exception:
         tokens = processed.split()
 
@@ -232,9 +245,15 @@ def preprocess_text(text: str, debug: bool = False) -> str:
     for token in tokens:
         if token not in PRESERVED_STOPWORDS:
             # Stage 8: Lemmatization (Dual-pass noun and verb)
-            lemma = lemmatizer.lemmatize(token, pos='v')
-            lemma = lemmatizer.lemmatize(lemma, pos='n')
-            filtered_tokens.append(lemma)
+            if lemmatizer:
+                try:
+                    lemma = lemmatizer.lemmatize(token, pos='v')
+                    lemma = lemmatizer.lemmatize(lemma, pos='n')
+                    filtered_tokens.append(lemma)
+                except Exception:
+                    filtered_tokens.append(token)
+            else:
+                filtered_tokens.append(token)
 
     final_text = " ".join(filtered_tokens).strip()
 

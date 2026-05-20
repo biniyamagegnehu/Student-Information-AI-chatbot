@@ -78,7 +78,7 @@ class ChatbotEngine:
                 fallback_reason=fallback_reason, 
                 query=raw_text_clean, 
                 context_used=False,
-                debug=True
+                debug=config.CHATBOT_DEBUG
             )
             
             # Log OOD warning (Step 8.7)
@@ -89,14 +89,15 @@ class ChatbotEngine:
                 raw_text_clean, intent, confidence, response, fallback_triggered, is_ood=True, entities=[]
             )
             
-            # Print debug info (Step 8.8)
-            print("\n==================================================")
-            print("[DEBUG]")
-            print(f"Input: {raw_text_clean}")
-            print(f"OOD Detected: {is_ood}")
-            print("Classifier Skipped: True")
-            print("Fallback Triggered: True")
-            print("==================================================\n")
+            # Print debug info (Step 8.8) - only when debug mode is enabled
+            if config.CHATBOT_DEBUG:
+                print("\n==================================================")
+                print("[DEBUG]")
+                print(f"Input: {raw_text_clean}")
+                print(f"OOD Detected: {is_ood}")
+                print("Classifier Skipped: True")
+                print("Fallback Triggered: True")
+                print("==================================================\n")
             
             return response, intent, confidence, fallback_triggered
 
@@ -143,8 +144,34 @@ class ChatbotEngine:
         # lowercase legacy keys for full backward compatibility.
         raw_lower = raw_text_clean.lower()
         heuristics_matched = False
+        
+        # --- EXPLICIT AMBIGUITY OVERRIDES ---
+        # 1. Scholarship vs Registration
+        scholarship_words = ["scholarship", "financial aid", "tuition waiver", "sponsorship", "grant"]
+        registration_words = ["apply", "registration portal", "enroll", "register", "add/drop", "add a course", "drop a course"]
+        
+        has_scholarship = any(w in raw_lower for w in scholarship_words)
+        has_registration = any(w in raw_lower for w in registration_words)
+        
+        # 2. Library Location vs Student Services
+        location_words = ["where", "wher", "location", "locate", "find", "directions"]
+        has_location_word = any(w in raw_lower for w in location_words)
+        has_library = "library" in raw_lower or extracted_entities.get("BUILDING", "").lower() == "library" or extracted_entities.get("student_services", "").lower() == "central library"
 
-        if extracted_entities:
+        if has_scholarship:
+            intent = "scholarship"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_registration:
+            intent = "registration"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_location_word and has_library:
+            intent = "location"
+            confidence = 1.0
+            heuristics_matched = True
+
+        if extracted_entities and not heuristics_matched:
             # A. Spatial locations check — expanded to include BUILDING (Phase 7)
             if any(w in raw_lower for w in ["where", "location", "block", "room", "office", "find", "map", "address", "building", "floor"]):
                 if any(k in extracted_entities for k in ["DEPARTMENT", "OFFICE", "BUILDING", "LOCATION",
@@ -287,7 +314,7 @@ class ChatbotEngine:
             fallback_triggered = True
 
         # --- STEP 4.5: CONTEXT DEBUG LOGGING (Step 13) ---
-        if context_used or is_followup:
+        if config.CHATBOT_DEBUG and (context_used or is_followup):
             print("\n" + "-" * 40)
             print(" [CONTEXT DEBUG] MULTI-TURN DIALOGUE FLOW")
             print("-" * 40)
@@ -305,7 +332,7 @@ class ChatbotEngine:
             fallback_reason, 
             query=raw_text_clean, 
             context_used=context_used,
-            debug=True
+            debug=config.CHATBOT_DEBUG
         )
 
         # --- STEP 6: CONVERSATION MEMORY UPDATE ---
@@ -326,11 +353,12 @@ class ChatbotEngine:
         )
 
         # Print detected entities in debug logs format (Step 7.2)
-        print("\n[DEBUG]")
-        print(f"Intent: {intent}")
-        print(f"Confidence: {confidence:.2f}")
-        print(f"Entities:\n{extracted_entities_raw}")
-        print("-" * 30 + "\n")
+        if config.CHATBOT_DEBUG:
+            print("\n[DEBUG]")
+            print(f"Intent: {intent}")
+            print(f"Confidence: {confidence:.2f}")
+            print(f"Entities:\n{extracted_entities_raw}")
+            print("-" * 30 + "\n")
 
         return response, intent, confidence, fallback_triggered
 

@@ -80,6 +80,16 @@ def run_automated_test_suite():
             ("can u help me with fees", "fees"),
             ("where admin office pls", "location")
         ],
+        "15. Ambiguity Resolution": [
+            ("where is library", "location"),
+            ("wher is library", "location"),
+            ("library location", "location"),
+            ("library services", "student_services"),
+            ("apply for scholarship", "scholarship"),
+            ("how to apply", "registration"),
+            ("registration portal", "registration"),
+            ("financial aid", "scholarship")
+        ],
         "17. OOD Rejection": [
             ("bitcoin price today", "fallback"),
             ("weather in london", "fallback"),
