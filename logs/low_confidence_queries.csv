@@ -1,7 +1,0 @@
-timestamp,user_input,confidence,predicted_intent
-2026-05-16T14:32:59.839769,can yo help me about registration,0.6672,registration
-2026-05-16T14:34:58.406539,ok when is the registration,0.6746,registration
-2026-05-16T14:36:47.049125,tell me in what way that you can help me?,0.3305,contacts
-2026-05-16T15:00:16.952409,can you help me,0.6745,help
-2026-05-16T15:00:34.898201,tell me about registration,0.5624,registration
-2026-05-16T15:04:32.063724,thak you,0.1197,bye
