@@ -178,12 +178,30 @@ def generate_entity_response(intent: str, entities: dict, query: str = None) -> 
         
         # Handle cases where NER might miss specific services
         if intent == "student_services" or intent == "location":
-            if "student support office" in q_lower:
+            if any(w in q_lower for w in ["student support office", "support office"]):
                 data = kb.get("student_services", {}).get("student support office")
                 if data: return f"The Student Support Office is located in {data['location']}. Contact: {data['contact']}."
-            if "health center" in q_lower:
+            if any(w in q_lower for w in ["health center", "clinic"]):
                 data = kb.get("student_services", {}).get("health center")
                 if data: return f"The Health Center is located in {data['location']}. Contact: {data['contact']}."
+            if any(w in q_lower for w in ["counseling", "therapy"]):
+                data = kb.get("student_services", {}).get("counseling")
+                if data: return f"The Counseling office is situated at {data['location']}. Contact them at {data['contact']}."
+            if "career" in q_lower:
+                data = kb.get("student_services", {}).get("career helpdesk")
+                if data: return f"The Career Helpdesk is situated at {data['location']}. Contact: {data['contact']}."
+
+        # Handle registrar and other offices direct contact/hours
+        if intent == "contacts":
+            if "registrar" in q_lower:
+                data = kb.get("offices", {}).get("registrar")
+                if data: return f"You can contact the Registrar Office at {data['contact']}. Hours: {data['hours']}."
+            if "finance" in q_lower:
+                data = kb.get("offices", {}).get("finance")
+                if data: return f"You can contact the Finance Office at {data['contact']}. Hours: {data['hours']}."
+            if "admin" in q_lower:
+                data = kb.get("offices", {}).get("admin office")
+                if data: return f"You can contact the Administration Office at {data['contact']}. Hours: {data['hours']}."
 
         # Check if the query asks about opening times/hours for departments/offices (Step 7.4)
         if any(w in q_lower for w in ["open", "time", "hours", "when does it"]):
@@ -307,7 +325,10 @@ def generate_entity_response(intent: str, entities: dict, query: str = None) -> 
             serv = entities["student_services"].lower()
             data = kb.get("student_services", {}).get(serv)
             if data:
-                return f"The {serv.title()} office is situated at {data['location']}. Contact them at {data['contact']} for inquiries."
+                display_name = serv.title()
+                if "office" in display_name.lower() or "helpdesk" in display_name.lower():
+                    return f"The {display_name} is situated at {data['location']}. Contact them at {data['contact']} for inquiries."
+                return f"The {display_name} office is situated at {data['location']}. Contact them at {data['contact']} for inquiries."
 
     return None
 

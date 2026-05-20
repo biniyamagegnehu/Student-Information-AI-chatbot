@@ -43,7 +43,9 @@ def run_classifier_evaluation():
         return
 
     df = pd.read_csv(HUMAN_TEST_FILE)
-    print(f" Balanced Human Test Set Loaded ({len(df)} samples).")
+    context_dependent_queries = ["when is it", "where is it", "how much is it", "tell me more"]
+    df = df[~df['query'].isin(context_dependent_queries)].copy()
+    print(f" Balanced Human Test Set Loaded ({len(df)} samples, context-dependent queries excluded).")
 
     # 3. Clean and Vectorize
     df['clean_text'] = df['query'].apply(preprocess_text)
@@ -135,7 +137,9 @@ def run_e2e_evaluation():
         return
 
     df = pd.read_csv(HUMAN_TEST_FILE)
-    print(f" Balanced Human Test Set Loaded ({len(df)} samples).")
+    context_dependent_queries = ["when is it", "where is it", "how much is it", "tell me more"]
+    df = df[~df['query'].isin(context_dependent_queries)].copy()
+    print(f" Balanced Human Test Set Loaded ({len(df)} samples, context-dependent queries excluded).")
 
     y_true = df['expected_intent']
     y_pred = []
@@ -202,6 +206,40 @@ def run_e2e_evaluation():
     print("  AUDIT COMPLETE: Validation Requirements Met.")
     print("="*60 + "\n")
 
+def run_context_evaluation():
+    print("\n" + "="*60)
+    print("  [MODE 2.5] MULTI-TURN CONTEXT-AWARE EVALUATION")
+    print("="*60)
+    
+    engine = ChatbotEngine()
+    if not engine.is_loaded:
+        print(" CRITICAL ERROR: Model files missing.")
+        return
+        
+    multi_turn_cases = [
+        ("tell me about registration", "registration", "when is it", "registration"),
+        ("where is the library", "location", "where is it", "location"),
+        ("tuition fee", "fees", "how much is it", "fees"),
+        ("i need help", "help", "tell me more", "help")
+    ]
+    
+    context_passed = 0
+    for setup_q, setup_intent, test_q, expected_intent in multi_turn_cases:
+        engine.memory.clear()
+        engine.get_reply(setup_q)
+        response, intent, conf, fallback = engine.get_reply(test_q)
+        
+        predicted = "fallback" if fallback or intent == "none" else intent
+        if predicted == expected_intent:
+            print(f"PASS: Query '{test_q}' resolved to '{predicted}' after context '{setup_intent}'")
+            context_passed += 1
+        else:
+            print(f"FAIL: Query '{test_q}' resolved to '{predicted}' (expected '{expected_intent}')")
+            
+    print(f"Multi-turn context success rate: {context_passed}/{len(multi_turn_cases)}")
+    print("=" * 60 + "\n")
+
 if __name__ == "__main__":
     run_classifier_evaluation()
     run_e2e_evaluation()
+    run_context_evaluation()

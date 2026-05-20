@@ -46,8 +46,9 @@ ENTITY_TEMPLATES = {
         "fees": ["fees", "fee", "tuition", "tuition fees", "payment", "payments"],
         "scholarship": ["scholarship", "scholarships", "financial aid"],
         "student services": ["student services", "student service", "student support"],
-        "counseling": ["counseling", "counselling", "therapy", "mental health"],
-        "career helpdesk": ["career helpdesk", "career services", "career center", "career advice"],
+        "student support office": ["student support office", "support office", "student support office location"],
+        "counseling": ["counseling", "counselling", "therapy", "mental health", "counseling office"],
+        "career helpdesk": ["career helpdesk", "career services", "career center", "career advice", "career desk"],
         "central library": ["central library", "library", "libraries"],
         "health center": ["health center", "clinic", "student clinic", "medical center", "hospital"]
     },

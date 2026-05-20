@@ -850,7 +850,11 @@
                 "that is all i needed to know goodbye today",
                 "i am looking for info on alright that makes sense, i'm gonna log off now",
                 "bye for now",
-                "thanks and bye"
+                "thanks and bye",
+                "take care",
+                "see you later",
+                "talk later",
+                "exit chat"
             ],
             "responses": [
                 "Goodbye! Have a productive and wonderful day with your studies.",
@@ -1343,7 +1347,9 @@
                 "what can you do",
                 "tell me more",
                 "guide me",
-                "show me available topics"
+                "show me available topics",
+                "can you help me",
+                "tell me what you support"
             ],
             "responses": [
                 "I am designed strictly to answer inquiries regarding university registration, courses, fees, exams, academic calendar, campus locations, contacts, scholarships, and student services. How can I help you today?",
@@ -3789,7 +3795,13 @@
                 "when is the next semester",
                 "academic calendar dates",
                 "what are the term dates",
-                "when do classes resume"
+                "when do classes resume",
+                "show timetable",
+                "timetable for computer science",
+                "class routine",
+                "lecture timetable",
+                "weekly class schedule",
+                "when is my class"
             ],
             "responses": [
                 "The university academic calendar lists term start/end dates, holiday periods, midterm breaks, and key academic deadlines. You can download the PDF calendar online.",
@@ -4266,7 +4278,12 @@
                 "i would like to inquire: where to find a sponsor",
                 "yo how to to get stipend",
                 "what time is is the sponsor deadline",
-                "my friend asked me about the exact deadline for submitting the application forms for the dean's list award and i don't know the answer"
+                "my friend asked me about the exact deadline for submitting the application forms for the dean's list award and i don't know the answer",
+                "fee waiver",
+                "tuition waiver",
+                "disabled students aid",
+                "financial assistance",
+                "grant support"
             ],
             "responses": [
                 "The university offers merit-based and need-based scholarships. Active applications can be submitted online under the 'Financial Aid & Grants' portal tab.",
@@ -5314,7 +5331,9 @@
                 "health center location",
                 "counseling office",
                 "career helpdesk",
-                "student affairs support"
+                "student affairs support",
+                "support office",
+                "clinic"
             ],
             "responses": [
                 "The Student Services Center in Block C provides academic advising, personal counseling, career guidance, and disability services.",

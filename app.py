@@ -129,7 +129,7 @@ class ChatbotEngine:
             if k_upper == "SERVICE":
                 if v == "scholarship":
                     extracted_entities["scholarship"] = "merit scholarship"
-                if v in ["student services", "counseling", "career helpdesk", "central library", "health center"]:
+                if v in ["student services", "counseling", "career helpdesk", "central library", "health center", "student support office"]:
                     extracted_entities["student_services"] = v
 
         # --- VARIABLES INITIALIZATION ---
@@ -146,28 +146,69 @@ class ChatbotEngine:
         heuristics_matched = False
         
         # --- EXPLICIT AMBIGUITY OVERRIDES ---
-        # 1. Scholarship vs Registration
-        scholarship_words = ["scholarship", "financial aid", "tuition waiver", "sponsorship", "grant"]
-        registration_words = ["apply", "registration portal", "enroll", "register", "add/drop", "add a course", "drop a course"]
+        # 1. Help intent routing
+        help_phrases = ["help", "support", "how do you work", "what can you do", "show me available topics", "guide me", "tell me what you support", "assist"]
+        specific_topics = ["fees", "fee", "exam", "exams", "registration", "register", "scholarship", "scholarships", "location", "locations", "courses", "course", "contacts", "contact", "schedule", "schedules", "timetable", "routine"]
+        has_help_phrase = any(w in raw_lower for w in help_phrases)
+        has_specific_topic = any(w in raw_lower for w in specific_topics)
         
-        has_scholarship = any(w in raw_lower for w in scholarship_words)
-        has_registration = any(w in raw_lower for w in registration_words)
+        # 2. Timetable/schedule routing
+        schedule_words = ["timetable", "routine", "class schedule", "lecture time", "class routine", "lecture timetable", "weekly class schedule", "lecture schedule", "when is my class"]
+        exam_words = ["exam", "final", "midterm", "test", "quiz", "examination"]
+        has_schedule_word = any(w in raw_lower for w in schedule_words)
+        has_exam_word = any(w in raw_lower for w in exam_words)
         
-        # 2. Library Location vs Student Services
+        # 3. Student services routing
+        student_services_words = ["student support office", "support office", "health center", "clinic", "counseling office", "career helpdesk", "student services", "counseling", "career"]
+        has_student_services = any(w in raw_lower for w in student_services_words) or any(k in extracted_entities for k in ["student_services", "STUDENT_SERVICES"])
+        
+        # 4. Registrar office hours / contacts routing
+        contact_words = ["office hours", "opening hours", "contact", "email", "phone", "reach", "number", "hours", "when does it open"]
+        has_contact_word = any(w in raw_lower for w in contact_words)
+        has_office_word = any(k in extracted_entities for k in ["OFFICE", "office"]) or any(w in raw_lower for w in ["registrar", "finance", "admin"])
+        
+        # 5. Scholarship vs fee routing
+        scholarship_words_broad = ["waiver", "aid", "grant", "sponsorship", "disabled students", "financial assistance", "scholarship", "financial aid", "tuition waiver"]
+        fees_words_strict = ["how much", "cost", "price", "payment", "pay", "fee schedule", "fees list", "tuition amount"]
+        has_broad_scholarship = any(w in raw_lower for w in scholarship_words_broad)
+        has_strict_fees = any(w in raw_lower for w in fees_words_strict)
+
+        # 6. Library Location
         location_words = ["where", "wher", "location", "locate", "find", "directions"]
         has_location_word = any(w in raw_lower for w in location_words)
         has_library = "library" in raw_lower or extracted_entities.get("BUILDING", "").lower() == "library" or extracted_entities.get("student_services", "").lower() == "central library"
+        has_library_location = has_location_word and has_library
 
-        if has_scholarship:
+        # 7. Registration
+        registration_words = ["apply", "registration portal", "enroll", "register", "add/drop", "add a course", "drop a course"]
+        has_registration = any(w in raw_lower for w in registration_words)
+
+        if has_help_phrase and not has_specific_topic:
+            intent = "help"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_library_location:
+            intent = "location"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_student_services:
+            intent = "student_services"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_schedule_word and not has_exam_word:
+            intent = "schedule"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_contact_word and has_office_word:
+            intent = "contacts"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_broad_scholarship and not has_strict_fees:
             intent = "scholarship"
             confidence = 1.0
             heuristics_matched = True
         elif has_registration:
             intent = "registration"
-            confidence = 1.0
-            heuristics_matched = True
-        elif has_location_word and has_library:
-            intent = "location"
             confidence = 1.0
             heuristics_matched = True
 
