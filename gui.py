@@ -19,7 +19,7 @@ import sys
 import threading
 import tkinter as tk
 from tkinter import font as tkfont
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, filedialog
 from datetime import datetime
 
 # ---------------------------------------------------------------------------
@@ -37,38 +37,41 @@ except Exception as _e:
 # CONSTANTS
 # ---------------------------------------------------------------------------
 APP_TITLE   = "Student Information Chatbot"
-WIN_WIDTH   = 900
-WIN_HEIGHT  = 650
-MIN_WIDTH   = 700
-MIN_HEIGHT  = 500
+WIN_WIDTH   = 950
+WIN_HEIGHT  = 700
+MIN_WIDTH   = 750
+MIN_HEIGHT  = 550
 
-# Colour palette
-C_BG        = "#F5F6FA"        # window background
-C_CHAT_BG   = "#FFFFFF"        # chat canvas
-C_USER_BG   = "#D4EDDA"        # user bubble  (soft green)
-C_USER_FG   = "#155724"
-C_BOT_BG    = "#D1ECF1"        # bot bubble   (soft blue)
-C_BOT_FG    = "#0C5460"
-C_SYS_BG    = "#FFF3CD"        # system msg   (soft yellow)
-C_SYS_FG    = "#856404"
-C_DEBUG_FG  = "#6C757D"        # debug overlay (grey)
+# Modernized colour palette
+C_BG        = "#F4F7F6"
+C_CHAT_BG   = "#FFFFFF"
+C_USER_BG   = "#E3F2FD"  # softer blue
+C_USER_FG   = "#0D47A1"  
+C_BOT_BG    = "#F5F5F5"  # soft gray
+C_BOT_FG    = "#212121"
+C_SYS_BG    = "#FFF8E1"
+C_SYS_FG    = "#F57F17"
+C_DEBUG_FG  = "#9E9E9E"
 C_INPUT_BG  = "#FFFFFF"
-C_SEND_BG   = "#007BFF"
+C_SEND_BG   = "#1976D2"
 C_SEND_FG   = "#FFFFFF"
-C_STATUS_BG = "#343A40"
-C_STATUS_FG = "#ADB5BD"
-C_HEADER_BG = "#1A237E"        # deep university blue
+C_STATUS_BG = "#263238"
+C_STATUS_FG = "#B0BEC5"
+C_HEADER_BG = "#0D47A1"  # Matches user FG for branding
 C_HEADER_FG = "#FFFFFF"
-C_TYPING_FG = "#6C757D"
+C_TYPING_FG = "#9E9E9E"
+C_BTN_BG    = "#E0E0E0"  # For quick actions
+C_BTN_FG    = "#424242"
 
 # Font definitions (resolved after root window exists)
-FONT_HEADER  = ("Segoe UI", 14, "bold")
-FONT_CHAT    = ("Segoe UI", 11)
-FONT_CHAT_TS = ("Segoe UI", 8)
-FONT_INPUT   = ("Segoe UI", 11)
-FONT_SEND    = ("Segoe UI", 10, "bold")
-FONT_STATUS  = ("Segoe UI", 9)
-FONT_DEBUG   = ("Segoe UI", 9, "italic")
+FONT_HEADER  = ("Segoe UI", 16, "bold")
+FONT_CHAT    = ("Segoe UI", 12)
+FONT_CHAT_TS = ("Segoe UI", 9)
+FONT_INPUT   = ("Segoe UI", 12)
+FONT_SEND    = ("Segoe UI", 11, "bold")
+FONT_STATUS  = ("Segoe UI", 10)
+FONT_DEBUG   = ("Segoe UI", 10, "italic")
+FONT_BTN     = ("Segoe UI", 10)
 
 SESSION_LOG = os.path.join("logs", "chat_session.txt")
 
@@ -107,7 +110,7 @@ class ChatbotGUI:
         self._configure_root()
         self._build_ui()
         self._init_engine()
-        self._show_welcome()
+        self._show_welcome(log=True)
 
     # ------------------------------------------------------------------
     # WINDOW SETUP
@@ -129,41 +132,61 @@ class ChatbotGUI:
     # ------------------------------------------------------------------
     def _build_ui(self):
         self._build_header()
-        self._build_chat_area()
-        self._build_input_area()
         self._build_status_bar()
+        self._build_input_area()
+        self._build_chat_area()
 
     def _build_header(self):
-        header = tk.Frame(self.root, bg=C_HEADER_BG, pady=10)
+        header = tk.Frame(self.root, bg=C_HEADER_BG, pady=12)
         header.pack(fill=tk.X, side=tk.TOP)
 
         tk.Label(
             header,
-            text="  STUDENT INFORMATION CHATBOT",
+            text="  Student Information Chatbot",
             font=FONT_HEADER,
             bg=C_HEADER_BG,
             fg=C_HEADER_FG,
         ).pack(side=tk.LEFT, padx=14)
 
-        # Debug toggle checkbox on the right
+        # Right-aligned buttons
+        right_frame = tk.Frame(header, bg=C_HEADER_BG)
+        right_frame.pack(side=tk.RIGHT, padx=14)
+
+        # Debug Mode toggle
         debug_cb = tk.Checkbutton(
-            header,
+            right_frame,
             text="Debug Mode",
             variable=self.debug_mode,
             bg=C_HEADER_BG,
             fg=C_HEADER_FG,
-            selectcolor=C_HEADER_BG,
+            selectcolor="#1565C0", # Active state
             activebackground=C_HEADER_BG,
             activeforeground=C_HEADER_FG,
-            font=("Segoe UI", 9),
+            font=("Segoe UI", 10),
             cursor="hand2",
         )
-        debug_cb.pack(side=tk.RIGHT, padx=14)
+        debug_cb.pack(side=tk.RIGHT, padx=(10, 0))
+
+        # Export Chat
+        btn_export = tk.Button(
+            right_frame, text="Export Chat", font=("Segoe UI", 10),
+            bg="#283593", fg=C_HEADER_FG, relief=tk.FLAT, cursor="hand2",
+            padx=10, pady=2, command=self._on_export_chat
+        )
+        btn_export.pack(side=tk.RIGHT, padx=5)
+
+        # Clear Chat
+        btn_clear = tk.Button(
+            right_frame, text="Clear Chat", font=("Segoe UI", 10),
+            bg="#C62828", fg=C_HEADER_FG, relief=tk.FLAT, cursor="hand2",
+            padx=10, pady=2, command=self._on_clear_chat
+        )
+        btn_clear.pack(side=tk.RIGHT, padx=5)
 
     def _build_chat_area(self):
         """Scrollable Text widget used as the chat display."""
         frame = tk.Frame(self.root, bg=C_BG)
-        frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=(8, 0))
+        frame.pack(fill=tk.BOTH, expand=True, padx=14, pady=(10, 0))
 
         # Scrollbar
         scrollbar = tk.Scrollbar(frame, cursor="arrow")
@@ -175,12 +198,13 @@ class ChatbotGUI:
             wrap=tk.WORD,
             bg=C_CHAT_BG,
             relief=tk.FLAT,
-            bd=0,
+            bd=1,
+            highlightbackground="#E0E0E0", highlightthickness=1,
             font=FONT_CHAT,
-            padx=12,
-            pady=10,
-            spacing1=4,
-            spacing3=4,
+            padx=16,
+            pady=14,
+            spacing1=6,
+            spacing3=6,
             yscrollcommand=scrollbar.set,
             cursor="arrow",
         )
@@ -194,28 +218,28 @@ class ChatbotGUI:
             foreground=C_USER_FG,
             font=FONT_CHAT,
             relief="flat",
-            lmargin1=200, lmargin2=200,   # push right
-            rmargin=10,
-            spacing1=6, spacing3=6,
+            lmargin1=150, lmargin2=150,   # push right
+            rmargin=15,
+            spacing1=8, spacing3=8,
         )
         self.chat_display.tag_config(
             "bot_bubble",
             background=C_BOT_BG,
             foreground=C_BOT_FG,
             font=FONT_CHAT,
-            lmargin1=10, lmargin2=10,
-            rmargin=200,
-            spacing1=6, spacing3=6,
+            lmargin1=15, lmargin2=15,
+            rmargin=150,
+            spacing1=8, spacing3=8,
         )
         self.chat_display.tag_config(
             "sys_bubble",
             background=C_SYS_BG,
             foreground=C_SYS_FG,
             font=("Segoe UI", 10, "italic"),
-            lmargin1=60, lmargin2=60,
-            rmargin=60,
+            lmargin1=80, lmargin2=80,
+            rmargin=80,
             justify=tk.CENTER,
-            spacing1=4, spacing3=4,
+            spacing1=6, spacing3=6,
         )
         self.chat_display.tag_config(
             "timestamp",
@@ -225,72 +249,81 @@ class ChatbotGUI:
         self.chat_display.tag_config(
             "label_user",
             foreground=C_USER_FG,
-            font=("Segoe UI", 9, "bold"),
-            lmargin1=200,
+            font=("Segoe UI", 10, "bold"),
+            lmargin1=150,
         )
         self.chat_display.tag_config(
             "label_bot",
             foreground=C_BOT_FG,
-            font=("Segoe UI", 9, "bold"),
-            lmargin1=10,
+            font=("Segoe UI", 10, "bold"),
+            lmargin1=15,
         )
         self.chat_display.tag_config(
             "debug_info",
             foreground=C_DEBUG_FG,
             font=FONT_DEBUG,
-            lmargin1=10, lmargin2=10,
-            spacing1=0, spacing3=4,
+            lmargin1=15, lmargin2=15,
+            spacing1=0, spacing3=6,
         )
         self.chat_display.tag_config(
             "typing",
             foreground=C_TYPING_FG,
-            font=("Segoe UI", 10, "italic"),
-            lmargin1=10,
+            font=("Segoe UI", 11, "italic"),
+            lmargin1=15,
         )
 
     def _build_input_area(self):
-        """Input row: text entry + Send button."""
-        frame = tk.Frame(self.root, bg=C_BG, pady=8)
-        frame.pack(fill=tk.X, side=tk.BOTTOM, padx=10, pady=(4, 4))
+        """Input row: Quick actions + Multi-line text entry + Send button."""
+        bottom_container = tk.Frame(self.root, bg=C_BG)
+        # Pack this before chat_area so it sticks to the bottom
+        bottom_container.pack(fill=tk.X, side=tk.BOTTOM, padx=14, pady=(8, 14))
 
-        self.input_var = tk.StringVar()
+        # Quick Actions Bar
+        qa_frame = tk.Frame(bottom_container, bg=C_BG)
+        qa_frame.pack(fill=tk.X, side=tk.TOP, pady=(0, 8))
 
-        self.input_field = tk.Entry(
-            frame,
-            textvariable=self.input_var,
-            font=FONT_INPUT,
-            bg=C_INPUT_BG,
-            fg="#212529",
-            insertbackground="#212529",
-            relief=tk.GROOVE,
-            bd=2,
+        topics = ["Registration", "Fees", "Exams", "Courses", "Locations", "Scholarships"]
+        for t in topics:
+            btn = tk.Button(
+                qa_frame, text=t, font=FONT_BTN,
+                bg=C_BTN_BG, fg=C_BTN_FG,
+                relief=tk.FLAT, cursor="hand2", padx=10, pady=4,
+                activebackground="#BDBDBD", activeforeground=C_BTN_FG,
+                command=lambda topic=t: self._send_quick_action(topic)
+            )
+            btn.pack(side=tk.LEFT, padx=(0, 8))
+
+        # Input row: Text + Send Button
+        input_frame = tk.Frame(bottom_container, bg=C_BG)
+        input_frame.pack(fill=tk.X, side=tk.TOP)
+
+        self.input_field = tk.Text(
+            input_frame, height=2, font=FONT_INPUT,
+            bg=C_INPUT_BG, fg="#212529", insertbackground="#212529",
+            relief=tk.FLAT, bd=1, highlightbackground="#CCCCCC", highlightthickness=1
         )
-        self.input_field.pack(side=tk.LEFT, fill=tk.X, expand=True, ipady=6, padx=(0, 8))
-        self.input_field.bind("<Return>", self._on_send)
-        self.input_field.bind("<KP_Enter>", self._on_send)  # numpad Enter
+        self.input_field.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10), ipady=6)
+        
+        # Keybindings
+        self.input_field.bind("<Return>", self._on_enter_pressed)
+        self.input_field.bind("<Shift-Return>", self._on_shift_enter)
+        self.root.bind("<Control-l>", self._on_clear_chat)
+        self.root.bind("<Control-L>", self._on_clear_chat)
+        
         self.input_field.focus_set()
 
         self.send_btn = tk.Button(
-            frame,
-            text="Send",
-            command=self._on_send,
-            font=FONT_SEND,
-            bg=C_SEND_BG,
-            fg=C_SEND_FG,
-            activebackground="#0056B3",
-            activeforeground=C_SEND_FG,
-            relief=tk.FLAT,
-            padx=18,
-            pady=6,
-            cursor="hand2",
-            bd=0,
+            input_frame, text="Send", font=FONT_SEND,
+            bg=C_SEND_BG, fg=C_SEND_FG, activebackground="#1565C0", activeforeground=C_SEND_FG,
+            relief=tk.FLAT, padx=22, pady=12, cursor="hand2", bd=0,
+            command=self._on_send
         )
-        self.send_btn.pack(side=tk.RIGHT)
+        self.send_btn.pack(side=tk.RIGHT, fill=tk.Y)
 
     def _build_status_bar(self):
         """Persistent status bar at the very bottom."""
         self.status_var = tk.StringVar(value="Initializing...")
-        bar = tk.Frame(self.root, bg=C_STATUS_BG, pady=3)
+        bar = tk.Frame(self.root, bg=C_STATUS_BG, pady=4)
         bar.pack(fill=tk.X, side=tk.BOTTOM)
 
         tk.Label(
@@ -300,7 +333,61 @@ class ChatbotGUI:
             fg=C_STATUS_FG,
             font=FONT_STATUS,
             anchor="w",
-        ).pack(side=tk.LEFT, padx=10)
+        ).pack(side=tk.LEFT, padx=14)
+
+    # ------------------------------------------------------------------
+    # EVENT HANDLERS
+    # ------------------------------------------------------------------
+    def _on_enter_pressed(self, event):
+        """Send message on Enter key (without Shift)."""
+        self._on_send()
+        return "break" # Prevent default newline insertion
+
+    def _on_shift_enter(self, event):
+        """Allow default behavior to insert newline."""
+        return None
+
+    def _on_clear_chat(self, event=None):
+        """Clear the chat window and reset."""
+        self.chat_display.configure(state=tk.NORMAL)
+        self.chat_display.delete("1.0", tk.END)
+        self.chat_display.configure(state=tk.DISABLED)
+        self._log_session("SYSTEM", "User cleared chat")
+        self._show_welcome(log=False)
+
+    def _on_export_chat(self, event=None):
+        """Export the chat display text to a local file."""
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".txt",
+            filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")],
+            title="Export Chat Log"
+        )
+        if not filepath:
+            return
+        
+        content = self.chat_display.get("1.0", tk.END)
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(content)
+            messagebox.showinfo("Export Successful", f"Chat exported to:\n{filepath}")
+        except Exception as e:
+            messagebox.showerror("Export Failed", f"An error occurred while saving:\n{e}")
+
+    def _send_quick_action(self, topic):
+        """Instantly populates the input with a relevant query and sends it."""
+        self.input_field.delete("1.0", tk.END)
+        queries = {
+            "Registration": "How do I register for classes?",
+            "Fees": "What is the tuition fee structure?",
+            "Exams": "When are the upcoming exams?",
+            "Courses": "Tell me about available courses.",
+            "Locations": "Where is the library located?",
+            "Scholarships": "What scholarships are available?"
+        }
+        query = queries.get(topic, f"Tell me about {topic}.")
+        
+        self.input_field.insert(tk.END, query)
+        self._on_send()
 
     # ------------------------------------------------------------------
     # ENGINE INITIALIZATION
@@ -315,7 +402,6 @@ class ChatbotGUI:
 
         try:
             self.engine = ChatbotEngine()
-            threshold = self.engine.model is not None
             if self.engine.is_loaded:
                 self._set_status(
                     f"System Ready  |  Confidence Threshold: 0.65  |  Model: Loaded"
@@ -330,7 +416,7 @@ class ChatbotGUI:
     # ------------------------------------------------------------------
     # WELCOME MESSAGE
     # ------------------------------------------------------------------
-    def _show_welcome(self):
+    def _show_welcome(self, log=True):
         lines = [
             "=" * 52,
             "   STUDENT INFORMATION CHATBOT",
@@ -356,19 +442,20 @@ class ChatbotGUI:
             "How can I help you today?",
             intent="greeting", confidence=1.0, is_fallback=False, is_ood=False,
         )
-        self._log_session("SYSTEM", "Session started")
+        if log:
+            self._log_session("SYSTEM", "Session started")
 
     # ------------------------------------------------------------------
     # SEND / RECEIVE FLOW
     # ------------------------------------------------------------------
     def _on_send(self, event=None):
         """Called when the user presses Enter or clicks Send."""
-        raw = self.input_var.get().strip()
+        raw = self.input_field.get("1.0", tk.END).strip()
         if not raw:
             return
 
         # Clear input immediately
-        self.input_var.set("")
+        self.input_field.delete("1.0", tk.END)
         self.input_field.focus_set()
 
         # Display user message
@@ -489,6 +576,10 @@ class ChatbotGUI:
     def _set_input_state(self, enabled: bool):
         state = tk.NORMAL if enabled else tk.DISABLED
         self.input_field.configure(state=state)
+        if enabled:
+            self.input_field.configure(bg=C_INPUT_BG)
+        else:
+            self.input_field.configure(bg="#E9ECEF")
         self.send_btn.configure(state=state)
 
     # ------------------------------------------------------------------
