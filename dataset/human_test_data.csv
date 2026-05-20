@@ -1,0 +1,135 @@
+query,expected_intent
+"when is registration",registration
+"regstration deadline",registration
+"can i still register",registration
+"where do i apply",registration
+"registration portal pls",registration
+"how to fix registration error?",registration
+"when does course registration end?",registration
+"late registration fee?",registration
+"can i add a course now?",registration
+"i forgot to register, what to do?",registration
+"how to drop a module?",registration
+"what programs do you offer",courses
+"software engineering available?",courses
+"cources list",courses
+"what can i study",courses
+"what majors do you have?",courses
+"is medicine available?",courses
+"list all engineering programs",courses
+"tell me about the cs degree",courses
+"subjects in pharmacy?",courses
+"difference between se and cs?",courses
+"can i take a minor in business?",courses
+"tuition fee",fees
+"how much should i pay",fees
+"fee deadline",fees
+"payment options pls",fees
+"how much is the tuition fee?",fees
+"payment bank account number",fees
+"can i pay in installments?",fees
+"cost sharing payment procedure",fees
+"late fee penalty amount",fees
+"where to pay cafeteria fee?",fees
+"tuition deadline?",fees
+"exam timetable",exam
+"final exam schedule",exam
+"mid exam date",exam
+"exam scheduel",exam
+"when is the midterm exam?",exam
+"final exam routine",exam
+"where is the exit exam held?",exam
+"passing mark for engineering exam",exam
+"i missed my test, can i retake?",exam
+"exam dates for seniors",exam
+"finals schedule please",exam
+"class schedule",schedule
+"show timetable",schedule
+"lecture plan this week",schedule
+"when is my class",schedule
+"when is my next class?",schedule
+"class timings for extension program",schedule
+"is there class tomorrow?",schedule
+"timetable for computer science",schedule
+"when does the semester end?",schedule
+"academic calendar 2024",schedule
+"what time does the lecture start?",schedule
+"scholarship info",scholarship
+"financial aid",scholarship
+"scholarship requirements",scholarship
+"how do i apply for scholarship",scholarship
+"how to apply for a scholarship?",scholarship
+"is there any financial aid for needy students?",scholarship
+"merit based sponsorship requirements",scholarship
+"how to get a student loan?",scholarship
+"fee waiver for disabled students",scholarship
+"stipend for international students",scholarship
+"sponsorship opportunities?",scholarship
+"where is the library",location
+"where admin office",location
+"location of registrar",location
+"cafeteria location",location
+"where is block c?",location
+"directions to the library",location
+"where is the registrar office?",location
+"map of the campus",location
+"where is the stadium?",location
+"how to find the faculty building?",location
+"is the toilet nearby?",location
+"registrar phone",contacts
+"university email",contacts
+"department contact",contacts
+"how do i contact administration",contacts
+"official email of the dean",contacts
+"support phone number",contacts
+"how to reach the president office?",contacts
+"contact info for cs head",contacts
+"help desk telegram link",contacts
+"registrar office hours",contacts
+"admin contact details",contacts
+"counseling services",student_services
+"student support office",student_services
+"career services",student_services
+"health center location",student_services
+"yo mate",greeting
+"hello campus bot",greeting
+"hey i have a question",greeting
+"selam",greeting
+"good morning assistant",greeting
+"hi are you awake?",greeting
+"sup bot",greeting
+"thanks a lot",thanks
+"you are a lifesaver",thanks
+"thx for the help",thanks
+"appreciate it",thanks
+"cool thanks",thanks
+"great job bot",thanks
+"thank you very much",thanks
+"bye bye",goodbye
+"see you later",goodbye
+"take care",goodbye
+"exit chat",goodbye
+"goodbye assistant",goodbye
+"i am done here",goodbye
+"shutting down",goodbye
+"i need help",help
+"can you assist me?",help
+"what can you do for me",help
+"help please",help
+"how do you work",help
+"when is it",schedule
+"where is it",location
+"tell me more",help
+"how much is it",fees
+"bitcoin price",fallback
+"weather today",fallback
+"football results",fallback
+"how to cook rice",fallback
+"tell me a joke",fallback
+"banana price today",fallback
+"who won the world cup?",fallback
+"i love football",fallback
+"weather in addis ababa",fallback
+"weather in london",fallback
+"latest politics",fallback
+"how to cook rice",fallback
