@@ -71,6 +71,10 @@ FONT_DEBUG = ("Segoe UI", 9, "italic")
 FONT_BTN = ("Segoe UI", 9)
 FONT_LABEL = ("Segoe UI", 10, "bold")
 
+# Chat history layout (display only)
+MSG_GAP_LINES = 1
+TYPING_PREFIX = "Assistant is typing"
+
 SESSION_LOG = os.path.join("logs", "chat_session.txt")
 
 QUICK_ACTIONS = [
@@ -116,6 +120,8 @@ class ChatbotGUI:
         self._typing_visible = False
         self._typing_anim_id = None
         self._typing_dots = 0
+        self._typing_start = None
+        self._transcript: list[dict] = []
 
         self._last_intent = "—"
         self._last_confidence = 0.0
@@ -198,18 +204,21 @@ class ChatbotGUI:
             font=FONT_CHAT,
             padx=18,
             pady=16,
-            spacing1=4,
-            spacing3=4,
+            spacing1=2,
+            spacing2=2,
+            spacing3=2,
             yscrollcommand=scrollbar.set,
             cursor="arrow",
         )
         self.chat_display.grid(row=0, column=0, sticky="nsew")
         scrollbar.config(command=self.chat_display.yview)
+        self.chat_display.bind("<Configure>", self._on_chat_resize)
 
         self._configure_chat_tags()
 
     def _configure_chat_tags(self):
         t = self.chat_display
+        t.tag_config("block_gap", spacing3=14)
         t.tag_config(
             "user_bubble",
             background=C_USER_BG,
@@ -217,59 +226,78 @@ class ChatbotGUI:
             font=FONT_CHAT,
             lmargin1=120,
             lmargin2=120,
-            rmargin=12,
-            spacing1=6,
-            spacing3=10,
+            rmargin=14,
+            spacing1=4,
+            spacing2=3,
+            spacing3=4,
         )
         t.tag_config(
             "bot_bubble",
             background=C_BOT_BG,
             foreground=C_BOT_FG,
             font=FONT_CHAT,
-            lmargin1=12,
-            lmargin2=12,
+            lmargin1=14,
+            lmargin2=14,
             rmargin=120,
-            spacing1=6,
-            spacing3=10,
+            spacing1=4,
+            spacing2=3,
+            spacing3=4,
         )
         t.tag_config(
             "sys_bubble",
             background=C_SYS_BG,
             foreground=C_SYS_FG,
             font=("Segoe UI", 10),
-            lmargin1=60,
-            lmargin2=60,
-            rmargin=60,
+            lmargin1=48,
+            lmargin2=48,
+            rmargin=48,
             justify=tk.CENTER,
-            spacing1=8,
-            spacing3=8,
+            spacing1=4,
+            spacing2=3,
+            spacing3=4,
         )
-        t.tag_config("timestamp", foreground="#90A4AE", font=FONT_CHAT_TS)
         t.tag_config(
             "label_user",
             foreground=C_USER_FG,
             font=FONT_LABEL,
             lmargin1=120,
+            lmargin2=120,
+            spacing3=2,
         )
         t.tag_config(
             "label_bot",
             foreground="#37474F",
             font=FONT_LABEL,
-            lmargin1=12,
+            lmargin1=14,
+            lmargin2=14,
+            spacing3=2,
+        )
+        t.tag_config(
+            "label_sys",
+            foreground="#558B2F",
+            font=FONT_CHAT_TS,
+            lmargin1=48,
+            lmargin2=48,
+            justify=tk.CENTER,
+            spacing3=2,
         )
         t.tag_config(
             "debug_info",
             foreground=C_DEBUG_FG,
             font=FONT_DEBUG,
-            lmargin1=12,
-            lmargin2=12,
-            spacing3=8,
+            lmargin1=14,
+            lmargin2=14,
+            rmargin=120,
+            spacing1=2,
+            spacing3=6,
         )
         t.tag_config(
             "typing",
             foreground=C_TYPING_FG,
             font=("Segoe UI", 10, "italic"),
-            lmargin1=12,
+            lmargin1=14,
+            lmargin2=14,
+            spacing3=4,
         )
 
     def _build_quick_actions(self):
@@ -458,12 +486,14 @@ class ChatbotGUI:
             self.send_btn.configure(state=tk.DISABLED, bg=C_SEND_DISABLED, cursor="arrow")
 
     def _on_clear_chat(self, event=None):
-        if self._typing_visible:
-            self._hide_typing()
+        self._hide_typing()
         self.chat_display.configure(state=tk.NORMAL)
         self.chat_display.delete("1.0", tk.END)
         self.chat_display.configure(state=tk.DISABLED)
+        self._typing_start = None
+        self._transcript.clear()
         self._log_session("SYSTEM", "User cleared chat")
+        self._append_system("Chat cleared. You can continue asking questions below.")
         self._show_welcome(log=False)
 
     def _on_reset_context(self):
@@ -486,7 +516,7 @@ class ChatbotGUI:
         )
         if not filepath:
             return
-        content = self.chat_display.get("1.0", tk.END)
+        content = self._format_transcript_export()
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(content)
@@ -638,10 +668,70 @@ class ChatbotGUI:
     # ------------------------------------------------------------------
     # MESSAGE RENDERING
     # ------------------------------------------------------------------
+    def _normalize_message(self, text: str) -> str:
+        """Collapse runs of blank lines; preserve intentional paragraph breaks."""
+        lines = [ln.rstrip() for ln in text.replace("\r\n", "\n").split("\n")]
+        out: list[str] = []
+        prev_blank = False
+        for ln in lines:
+            if not ln.strip():
+                if not prev_blank and out:
+                    out.append("")
+                prev_blank = True
+                continue
+            out.append(ln)
+            prev_blank = False
+        return "\n".join(out).strip()
+
+    def _record_transcript(
+        self,
+        role: str,
+        body: str,
+        *,
+        ts: str | None = None,
+        debug: str | None = None,
+    ):
+        self._transcript.append(
+            {
+                "role": role,
+                "ts": ts or _ts(),
+                "body": self._normalize_message(body),
+                "debug": debug,
+            }
+        )
+
+    def _format_transcript_export(self) -> str:
+        lines = [
+            APP_TITLE,
+            f"Exported: {_full_ts()}",
+            "=" * 60,
+            "",
+        ]
+        for entry in self._transcript:
+            role = entry["role"]
+            ts = entry["ts"]
+            body = entry["body"]
+            lines.append(f"[{ts}] {role}")
+            for para in body.split("\n"):
+                lines.append(f"  {para}" if para else "")
+            if entry.get("debug"):
+                lines.append(f"  (debug) {entry['debug']}")
+            lines.append("")
+        if len(lines) <= 4:
+            lines.append("(No messages in this session.)")
+        return "\n".join(lines).rstrip() + "\n"
+
+    def _message_block_gap(self):
+        if self.chat_display.get("1.0", tk.END).strip():
+            self._write("\n" * MSG_GAP_LINES, "block_gap")
+
     def _append_user(self, text: str):
-        self._write("\n", "timestamp")
-        self._write(f"You  ·  {_ts()}\n", "label_user")
-        self._write(f"{text}\n", "user_bubble")
+        ts = _ts()
+        body = self._normalize_message(text)
+        self._record_transcript("You", body, ts=ts)
+        self._message_block_gap()
+        self._write(f"You  ·  {ts}\n", "label_user")
+        self._write(f"{body}\n", "user_bubble")
         self._scroll_to_end()
 
     def _append_bot(
@@ -652,26 +742,33 @@ class ChatbotGUI:
         is_fallback=False,
         is_ood=False,
     ):
-        self._write("\n", "timestamp")
-        self._write(f"Assistant  ·  {_ts()}\n", "label_bot")
-        self._write(f"{text}\n", "bot_bubble")
-
+        ts = _ts()
+        body = self._normalize_message(text)
+        debug_line = None
         if self.debug_mode.get() and intent:
             flags = []
             if is_ood:
                 flags.append("OOD")
             if is_fallback:
-                flags.append("FALLBACK")
-            flag_str = f"  [{' | '.join(flags)}]" if flags else ""
-            self._write(
-                f"  ↳ intent: {intent}  ·  confidence: {confidence:.2f}{flag_str}\n",
-                "debug_info",
-            )
+                flags.append("fallback")
+            flag_str = f" [{', '.join(flags)}]" if flags else ""
+            debug_line = f"intent={intent}, confidence={confidence:.2f}{flag_str}"
+
+        self._record_transcript("Assistant", body, ts=ts, debug=debug_line)
+        self._message_block_gap()
+        self._write(f"Assistant  ·  {ts}\n", "label_bot")
+        self._write(f"{body}\n", "bot_bubble")
+        if debug_line:
+            self._write(f"↳ {debug_line}\n", "debug_info")
         self._scroll_to_end()
 
     def _append_system(self, text: str):
-        self._write("\n", "timestamp")
-        self._write(f"{text}\n", "sys_bubble")
+        ts = _ts()
+        body = self._normalize_message(text)
+        self._record_transcript("System", body, ts=ts)
+        self._message_block_gap()
+        self._write(f"System  ·  {ts}\n", "label_sys")
+        self._write(f"{body}\n", "sys_bubble")
         self._scroll_to_end()
 
     def _write(self, text: str, tag: str):
@@ -680,60 +777,65 @@ class ChatbotGUI:
         self.chat_display.configure(state=tk.DISABLED)
 
     def _scroll_to_end(self):
+        self.chat_display.update_idletasks()
         self.chat_display.see(tk.END)
+        self.chat_display.yview_moveto(1.0)
+
+    def _on_chat_resize(self, event=None):
+        if self._typing_visible:
+            self._scroll_to_end()
 
     # ------------------------------------------------------------------
     # TYPING INDICATOR
     # ------------------------------------------------------------------
     def _show_typing(self):
+        if self._typing_visible:
+            return
         self._typing_visible = True
         self._typing_dots = 0
         self._render_typing_line()
-        self._scroll_to_end()
+
+    def _remove_typing_indicator(self):
+        if not self._typing_start:
+            return
+        self.chat_display.configure(state=tk.NORMAL)
+        try:
+            self.chat_display.delete(self._typing_start, tk.END)
+        except tk.TclError:
+            pass
+        self._typing_start = None
+        self.chat_display.configure(state=tk.DISABLED)
 
     def _render_typing_line(self):
         if not self._typing_visible:
             return
-        self._hide_typing(silent=True)
+        self._remove_typing_indicator()
         dots = "." * ((self._typing_dots % 3) + 1)
         self.chat_display.configure(state=tk.NORMAL)
+        self._typing_start = self.chat_display.index(tk.END)
         self.chat_display.insert(
             tk.END,
-            f"\nAssistant is typing{dots}\n",
+            f"{TYPING_PREFIX}{dots}\n",
             "typing",
         )
-        self._typing_marker = "typing_active"
-        self.chat_display.mark_set(self._typing_marker, "end-2l linestart")
-        self.chat_display.mark_gravity(self._typing_marker, tk.LEFT)
         self.chat_display.configure(state=tk.DISABLED)
-        self._scroll_to_end()
         self._typing_dots += 1
+        self._scroll_to_end()
         self._typing_anim_id = self.root.after(450, self._animate_typing)
 
     def _animate_typing(self):
+        self._typing_anim_id = None
         if self._typing_visible:
             self._render_typing_line()
 
-    def _hide_typing(self, silent=False):
+    def _hide_typing(self):
         if self._typing_anim_id:
             self.root.after_cancel(self._typing_anim_id)
             self._typing_anim_id = None
-        if not self._typing_visible:
+        if not self._typing_visible and not self._typing_start:
             return
         self._typing_visible = False
-        self.chat_display.configure(state=tk.NORMAL)
-        try:
-            if hasattr(self, "_typing_marker"):
-                self.chat_display.delete(self._typing_marker, tk.END)
-        except tk.TclError:
-            content = self.chat_display.get("1.0", tk.END)
-            for line in ("\nAssistant is typing.\n", "\nAssistant is typing..\n", "\nAssistant is typing...\n"):
-                if line in content:
-                    idx = content.rfind(line)
-                    if idx >= 0:
-                        self.chat_display.delete(f"1.0+{idx}c", tk.END)
-                    break
-        self.chat_display.configure(state=tk.DISABLED)
+        self._remove_typing_indicator()
 
     # ------------------------------------------------------------------
     # INPUT STATE
