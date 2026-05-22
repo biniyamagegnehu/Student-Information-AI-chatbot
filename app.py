@@ -118,8 +118,13 @@ class ChatbotEngine:
             
             # Phase 6 backward-compatibility mapping
             if k_upper == "BUILDING" and v == "library":
-                extracted_entities["student_services"] = "central library"
-                extracted_entities["STUDENT_SERVICES"] = "central library"
+                is_lib_location = any(
+                    w in raw_text_clean.lower()
+                    for w in ["where", "location", "find", "directions", "nearby", "map", "navigate", "wher"]
+                )
+                if not is_lib_location:
+                    extracted_entities["student_services"] = "central library"
+                    extracted_entities["STUDENT_SERVICES"] = "central library"
             if k_upper == "OFFICE":
                 short_val = v.replace(" office", "").strip()
                 extracted_entities["office"] = short_val
@@ -140,95 +145,213 @@ class ChatbotEngine:
         fallback_reason = None
 
         # --- STEP 1.5: HYBRID INTENT RESOLUTION (HEURISTIC ENGINE OVERRIDE) ---
-        # Uses both Phase 7 uppercase keys (DEPARTMENT, OFFICE, BUILDING) and
-        # lowercase legacy keys for full backward compatibility.
+        # Priority: greeting > thanks > goodbye > contacts > student_services >
+        # fees > registration > scholarship > location > schedule > help (last)
         raw_lower = raw_text_clean.lower()
         heuristics_matched = False
-        
-        # --- EXPLICIT AMBIGUITY OVERRIDES ---
-        # 1. Help intent routing
-        help_phrases = ["help", "support", "how do you work", "what can you do", "show me available topics", "guide me", "tell me what you support", "assist"]
-        specific_topics = ["fees", "fee", "exam", "exams", "registration", "register", "scholarship", "scholarships", "location", "locations", "courses", "course", "contacts", "contact", "schedule", "schedules", "timetable", "routine"]
-        has_help_phrase = any(w in raw_lower for w in help_phrases)
-        has_specific_topic = any(w in raw_lower for w in specific_topics)
-        
-        # 2. Timetable/schedule routing
-        schedule_words = ["timetable", "routine", "class schedule", "lecture time", "class routine", "lecture timetable", "weekly class schedule", "lecture schedule", "when is my class"]
+
+        # --- Phrase / keyword groups ---
+        greeting_phrases = [
+            "good morning", "good afternoon", "good evening", "hello campus",
+            "hello", "hi ", "hi,", "hey i have", "hey ", "selam", "yo mate", "sup bot", "sup "
+        ]
+        thanks_phrases = [
+            "thank you", "thanks", "thx", "appreciate it", "appreciate your",
+            "much appreciated", "lifesaver", "great job bot", "cool thanks", "you are a lifesaver"
+        ]
+        goodbye_phrases = [
+            "goodbye", "bye bye", "see you later", "take care", "exit chat",
+            "shutting down", "i am done here", "i am done", "farewell"
+        ]
+
+        comm_words = ["phone", "number", "email", "contact", "reach", "telegram", "link"]
+        office_context_words = ["support", "help desk", "registrar", "office", "department", "desk"]
+        has_comm = any(w in raw_lower for w in comm_words)
+        has_office_context = any(w in raw_lower for w in office_context_words)
+
+        location_words = ["where", "wher", "location", "locate", "find", "directions", "nearby", "map", "navigate"]
+        has_location_word = any(w in raw_lower for w in location_words)
+
+        student_services_words = [
+            "student support office", "support office", "health center location",
+            "health center", "clinic location", "clinic", "counseling office",
+            "counseling services", "counseling", "career helpdesk", "career services",
+            "student services"
+        ]
+        is_library_location_query = (
+            "library" in raw_lower
+            and has_location_word
+            and not any(w in raw_lower for w in ["service", "services", "borrow", "book", "open", "hours"])
+        )
+        has_student_services = (
+            not is_library_location_query
+            and (
+                any(w in raw_lower for w in student_services_words)
+                or any(k in extracted_entities for k in ["student_services", "STUDENT_SERVICES"])
+                or extracted_entities.get("SERVICE", "") in [
+                    "student services", "student support office", "counseling",
+                    "career helpdesk", "health center"
+                ]
+            )
+        )
+
+        fees_core_words = ["pay", "payment", "fee", "fees", "tuition", "billing"]
+        fees_amount_words = ["how much", "cost", "price", "deadline"]
+        has_fees_payment = (
+            any(w in raw_lower for w in fees_core_words)
+            or (
+                any(w in raw_lower for w in fees_amount_words)
+                and any(w in raw_lower for w in fees_core_words + ["cafeteria", "dorm", "semester", "installment", "penalty"])
+            )
+        )
+        finance_office_location = (
+            has_fees_payment
+            and any(w in raw_lower for w in ["where", "location", "find", "directions"])
+            and any(w in raw_lower for w in ["finance office", "finance department", "cashier office"])
+            and not any(w in raw_lower for w in ["cafeteria", "dorm", "registration fee", "tuition"])
+        )
+
+        registration_words = [
+            "registration portal", "registration deadline", "late registration",
+            "add/drop", "add a course", "drop a course", "drop a module",
+            "enroll", "enrollment", "register", "registration"
+        ]
+        has_registration = (
+            any(w in raw_lower for w in registration_words)
+            or ("regist" in raw_lower and any(w in raw_lower for w in ["deadline", "portal", "error", "fee", "course", "module"]))
+            or ("how to apply" in raw_lower and "scholarship" not in raw_lower)
+            or ("apply" in raw_lower and "scholarship" not in raw_lower and "where" in raw_lower)
+        )
+
+        scholarship_words_broad = [
+            "waiver", "aid", "grant", "sponsorship", "disabled students",
+            "financial assistance", "scholarship", "financial aid", "tuition waiver", "stipend", "loan"
+        ]
+        has_broad_scholarship = any(w in raw_lower for w in scholarship_words_broad)
+
+        location_buildings = [
+            "stadium", "faculty building", "toilet", "restroom", "washroom",
+            "library", "cafeteria", "block a", "block b", "block c", "registrar", "admin"
+        ]
+        has_location_target = (
+            any(w in raw_lower for w in location_buildings)
+            or any(k in extracted_entities for k in [
+                "DEPARTMENT", "OFFICE", "BUILDING", "LOCATION",
+                "department", "office", "student_services"
+            ])
+        )
+
+        schedule_words = [
+            "timetable", "routine", "class schedule", "lecture time", "class routine",
+            "lecture timetable", "weekly class schedule", "lecture schedule",
+            "when is my class", "academic calendar", "semester end", "semester start"
+        ]
         exam_words = ["exam", "final", "midterm", "test", "quiz", "examination"]
         has_schedule_word = any(w in raw_lower for w in schedule_words)
         has_exam_word = any(w in raw_lower for w in exam_words)
-        
-        # 3. Student services routing
-        student_services_words = ["student support office", "support office", "health center", "clinic", "counseling office", "career helpdesk", "student services", "counseling", "career"]
-        has_student_services = any(w in raw_lower for w in student_services_words) or any(k in extracted_entities for k in ["student_services", "STUDENT_SERVICES"])
-        
-        # 4. Registrar office hours / contacts routing
-        contact_words = ["office hours", "opening hours", "contact", "email", "phone", "reach", "number", "hours", "when does it open"]
-        has_contact_word = any(w in raw_lower for w in contact_words)
-        has_office_word = any(k in extracted_entities for k in ["OFFICE", "office"]) or any(w in raw_lower for w in ["registrar", "finance", "admin"])
-        
-        # 5. Scholarship vs fee routing
-        scholarship_words_broad = ["waiver", "aid", "grant", "sponsorship", "disabled students", "financial assistance", "scholarship", "financial aid", "tuition waiver"]
-        fees_words_strict = ["how much", "cost", "price", "payment", "pay", "fee schedule", "fees list", "tuition amount"]
-        has_broad_scholarship = any(w in raw_lower for w in scholarship_words_broad)
-        has_strict_fees = any(w in raw_lower for w in fees_words_strict)
 
-        # 6. Library Location
-        location_words = ["where", "wher", "location", "locate", "find", "directions"]
-        has_location_word = any(w in raw_lower for w in location_words)
-        has_library = "library" in raw_lower or extracted_entities.get("BUILDING", "").lower() == "library" or extracted_entities.get("student_services", "").lower() == "central library"
-        has_library_location = has_location_word and has_library
+        help_patterns = [
+            "i need help", "help please", "what can you do", "how do you work",
+            "show me available topics", "guide me", "tell me what you support",
+            "tell me more", "can you assist me", "how can you help",
+            "what can you do for me", "what kind of questions can i ask",
+            "show me available categories", "what are your capabilities",
+            "help menu", "chatbot options", "how does this chatbot work"
+        ]
+        help_blocked = (
+            has_comm
+            or has_student_services
+            or has_fees_payment
+            or has_registration
+            or has_location_word
+            or any(w in raw_lower for w in thanks_phrases + goodbye_phrases)
+            or "help desk" in raw_lower
+            or ("support" in raw_lower and has_comm)
+            or ("support" in raw_lower and "office" in raw_lower)
+        )
+        has_generic_help = any(p in raw_lower for p in help_patterns) and not help_blocked
 
-        # 7. Registration
-        registration_words = ["apply", "registration portal", "enroll", "register", "add/drop", "add a course", "drop a course"]
-        has_registration = any(w in raw_lower for w in registration_words)
-
-        if has_help_phrase and not has_specific_topic:
-            intent = "help"
+        # --- Ordered routing (most specific first, help last) ---
+        if any(p in raw_lower for p in greeting_phrases) and "help desk" not in raw_lower:
+            intent = "greeting"
             confidence = 1.0
             heuristics_matched = True
-        elif has_library_location:
-            intent = "location"
+        elif any(p in raw_lower for p in thanks_phrases):
+            intent = "thanks"
             confidence = 1.0
             heuristics_matched = True
-        elif has_student_services:
+        elif any(p in raw_lower for p in goodbye_phrases):
+            intent = "goodbye"
+            confidence = 1.0
+            heuristics_matched = True
+        elif (has_comm and has_office_context) or (
+            has_comm and any(w in raw_lower for w in ["registrar", "help desk", "support desk", "admin"])
+        ) or (
+            any(w in raw_lower for w in ["office hours", "opening hours", "hours"])
+            and any(w in raw_lower for w in ["registrar", "finance", "admin", "office", "department"])
+        ):
+            intent = "contacts"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_student_services and "help desk" not in raw_lower:
             intent = "student_services"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_registration or "late registration" in raw_lower:
+            intent = "registration"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_broad_scholarship and not finance_office_location:
+            intent = "scholarship"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_fees_payment and not finance_office_location and not has_broad_scholarship:
+            intent = "fees"
+            confidence = 1.0
+            heuristics_matched = True
+        elif has_location_word and has_location_target and not (has_fees_payment and "pay" in raw_lower):
+            intent = "location"
             confidence = 1.0
             heuristics_matched = True
         elif has_schedule_word and not has_exam_word:
             intent = "schedule"
             confidence = 1.0
             heuristics_matched = True
-        elif has_contact_word and has_office_word:
-            intent = "contacts"
-            confidence = 1.0
-            heuristics_matched = True
-        elif has_broad_scholarship and not has_strict_fees:
-            intent = "scholarship"
-            confidence = 1.0
-            heuristics_matched = True
-        elif has_registration:
-            intent = "registration"
+        elif has_generic_help:
+            intent = "help"
             confidence = 1.0
             heuristics_matched = True
 
         if extracted_entities and not heuristics_matched:
-            # A. Spatial locations check — expanded to include BUILDING (Phase 7)
-            if any(w in raw_lower for w in ["where", "location", "block", "room", "office", "find", "map", "address", "building", "floor"]):
+            # A. Fees check — before location when payment/fee keywords present
+            if any(w in raw_lower for w in ["how much", "cost", "price", "tuition", "fee", "fees", "pay", "payment", "deadline"]):
+                if any(k in extracted_entities for k in ["DEPARTMENT", "department"]) or extracted_entities.get("SERVICE") == "fees" or extracted_entities.get("service") == "fees":
+                    intent = "fees"
+                    confidence = 1.0
+                    heuristics_matched = True
+                elif extracted_entities.get("BUILDING") == "cafeteria" and "pay" in raw_lower:
+                    intent = "fees"
+                    confidence = 1.0
+                    heuristics_matched = True
+
+            # B. Registration — late registration fee is a registration penalty, not tuition
+            elif "late registration" in raw_lower or (
+                any(w in raw_lower for w in ["register", "registration", "enroll", "add", "drop"])
+                and extracted_entities.get("SERVICE") == "registration"
+            ):
+                intent = "registration"
+                confidence = 1.0
+                heuristics_matched = True
+
+            # C. Spatial locations check — expanded to include BUILDING (Phase 7)
+            elif any(w in raw_lower for w in ["where", "location", "block", "room", "find", "map", "address", "building", "floor", "nearby", "directions"]):
                 if any(k in extracted_entities for k in ["DEPARTMENT", "OFFICE", "BUILDING", "LOCATION",
                                                           "department", "office", "student_services"]):
                     intent = "location"
                     confidence = 1.0
                     heuristics_matched = True
 
-            # B. Fees check — accept DEPARTMENT *or* SERVICE:fees entity
-            elif any(w in raw_lower for w in ["how much", "cost", "price", "tuition", "fee", "fees", "pay", "payment"]):
-                if any(k in extracted_entities for k in ["DEPARTMENT", "department"]) or extracted_entities.get("SERVICE") == "fees" or extracted_entities.get("service") == "fees":
-                    intent = "fees"
-                    confidence = 1.0
-                    heuristics_matched = True
-
-            # C. Exams check
+            # D. Exams check
             elif any(w in raw_lower for w in ["exam", "exams", "examination", "test", "schedule", "timetable", "routine", "midterm", "final"]):
                 if any(k in extracted_entities for k in ["DEPARTMENT", "department"]):
                     intent = "exam"
@@ -339,10 +462,12 @@ class ChatbotEngine:
 
         # --- STEP 3.5: LOCATION FALLBACK GUARDRAIL (Step 7.6) ---
         if intent == "location" and not fallback_triggered:
+            campus_landmarks = ["stadium", "faculty building", "toilet", "restroom", "washroom"]
+            has_landmark = any(lm in raw_lower for lm in campus_landmarks)
             has_location_entity = any(
                 k in extracted_entities for k in ["BUILDING", "DEPARTMENT", "OFFICE", "LOCATION"]
             )
-            if not has_location_entity:
+            if not has_location_entity and not has_landmark:
                 intent = "fallback"
                 fallback_reason = "missing_location"
                 fallback_triggered = True

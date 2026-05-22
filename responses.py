@@ -164,6 +164,9 @@ def generate_entity_response(intent: str, entities: dict, query: str = None) -> 
             if any(w in q_lower for w in ["add", "drop"]):
                 ans = kb.get("registration_details", {}).get("course add/drop")
                 if ans: return ans
+            if "late registration" in q_lower and "fee" in q_lower:
+                ans = kb.get("registration_details", {}).get("registration deadline")
+                if ans: return ans
             if any(w in q_lower for w in ["late", "deadline"]):
                 ans = kb.get("registration_details", {}).get("registration deadline")
                 if ans: return ans
@@ -235,6 +238,12 @@ def generate_entity_response(intent: str, entities: dict, query: str = None) -> 
                 return "Block B is located on the west side of the campus, next to the library."
             elif bld == "block c":
                 return "Block C is situated on the east side of the campus."
+            elif bld == "stadium":
+                return "The university stadium is located on the south side of the campus, next to the sports complex."
+            elif bld == "faculty building":
+                return "The Faculty Building is located near Block C, facing the central plaza."
+            elif bld == "toilet":
+                return "Restrooms are available on every floor of academic blocks and near the cafeteria and library."
 
         if "DEPARTMENT" in entities:
             dept = entities["DEPARTMENT"].lower()

@@ -56,7 +56,9 @@ OOD_KEYWORDS = [
     "politics",
     "dating",
     "hacking",
-    "programming"
+    "programming",
+    "banana",
+    "fruit"
 ]
 
 

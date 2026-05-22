@@ -31,7 +31,10 @@ ENTITY_TEMPLATES = {
         "block c": ["block c", "building c", "hall c"],
         "library": ["library", "central library", "libary", "central plaza building"],
         "cafeteria": ["cafeteria", "cafe", "canteen", "dining hall"],
-        "main hall": ["main hall", "auditorium", "assembly hall"]
+        "main hall": ["main hall", "auditorium", "assembly hall"],
+        "stadium": ["stadium", "sports complex", "sport stadium", "athletic field"],
+        "faculty building": ["faculty building", "faculty block", "faculties building"],
+        "toilet": ["toilet", "restroom", "washroom", "bathroom", "lavatory"]
     },
     "OFFICE": {
         "registrar office": ["registrar office", "registrar", "registrars office", "registration office"],
